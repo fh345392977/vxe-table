@@ -507,22 +507,22 @@ export default {
               params.page = tablePage
             }
             if (code === 'reload') {
-              const defaultSort = $xetable.sortOpts.defaultSort
-              let sortParams = {}
+              // const defaultSort = $xetable.sortOpts.defaultSort
+              // let sortParams = {}
               if (pagerConfig) {
                 tablePage.currentPage = 1
               }
-              // 如果使用默认排序
-              if (defaultSort) {
-                sortParams = {
-                  property: defaultSort.field,
-                  order: defaultSort.order
-                }
-              }
-              this.sortData = params.sort = sortParams
-              this.filterData = params.filters = []
-              this.pendingRecords = []
-              this.clearAll()
+              // // 如果使用默认排序
+              // if (defaultSort) {
+              //   sortParams = {
+              //     property: defaultSort.field,
+              //     order: defaultSort.order
+              //   }
+              // }
+              // this.sortData = params.sort = sortParams
+              // this.filterData = params.filters = []
+              // this.pendingRecords = []
+              // this.clearAll()
             }
             const applyArgs = [params].concat(args)
             this.tableLoading = true
@@ -746,7 +746,7 @@ export default {
           sortBy: params.sortBy
         } : {}
         if (proxyConfig) {
-          this.commitProxy('query')
+          this.commitProxy('reload')
         }
       }
       this.$emit('sort-change', Object.assign({ $grid: this }, params))
@@ -757,7 +757,7 @@ export default {
       // 如果是服务端过滤
       if ($table.filterOpts.remote || remoteFilter) {
         this.filterData = filters
-        this.commitProxy('query')
+        this.commitProxy('reload')
       }
       this.$emit('filter-change', Object.assign({ $grid: this }, params))
     },
