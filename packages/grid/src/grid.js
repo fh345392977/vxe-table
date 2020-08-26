@@ -418,6 +418,8 @@ export default {
     initPages () {
       if (this.pagerConfig && this.pagerOpts.pageSize) {
         this.tablePage.pageSize = this.pagerOpts.pageSize
+      }
+      if (this.pagerConfig && this.pagerOpts.currentPage) {
         this.tablePage.currentPage = this.pagerOpts.currentPage
       }
     },
@@ -426,7 +428,7 @@ export default {
       if (proxyConfig) {
         if (!proxyInited && proxyOpts.autoLoad !== false) {
           this.proxyInited = true
-          this.$nextTick(() => this.commitProxy('reload'))
+          this.$nextTick(() => this.commitProxy('init'))
         }
         if (formConfig && proxyOpts.form && formOpts.items) {
           const formData = {}
@@ -492,6 +494,7 @@ export default {
           this.resetColumn(true)
           break
         case 'reload':
+        case 'init':
         case 'query': {
           const ajaxMethods = ajax.query
           if (ajaxMethods) {
