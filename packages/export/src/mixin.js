@@ -3,6 +3,8 @@ import GlobalConfig from '../../conf'
 import VXETable from '../../v-x-e-table'
 import { UtilTools, DomTools } from '../../tools'
 
+const { formatText } = UtilTools
+
 // 默认导出或打印的 HTML 样式
 const defaultHtmlStyle = 'body{margin:0;}body *{-webkit-box-sizing:border-box;box-sizing:border-box}.vxe-table{border:0;border-collapse:separate;text-align:left;font-size:14px;border-spacing:0}.vxe-table:not(.is--print ){table-layout:fixed;}.vxe-table.is--print{width:100%}.vxe-table.border--default,.vxe-table.border--full,.vxe-table.border--outer{border-top:1px solid #e8eaec;}.vxe-table.border--default,.vxe-table.border--full,.vxe-table.border--outer{border-left:1px solid #e8eaec;}.vxe-table.border--outer,.vxe-table.border--default th,.vxe-table.border--default td,.vxe-table.border--full th,.vxe-table.border--full td,.vxe-table.border--outer th,.vxe-table.border--inner th,.vxe-table.border--inner td{border-bottom:1px solid #e8eaec}.vxe-table.border--default,.vxe-table.border--outer,.vxe-table.border--full th,.vxe-table.border--full td{border-right:1px solid #e8eaec}.vxe-table.border--default th,.vxe-table.border--full th,.vxe-table.border--outer th{background-color:#f8f8f9;}.vxe-table td>div,.vxe-table th>div{padding:.5em .4em}.col--center{text-align:center}.col--right{text-align:right}.vxe-table:not(.is--print ) .col--ellipsis>div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;word-break:break-all}.vxe-table--tree-node{text-align:left}.vxe-table--tree-node-wrapper{position:relative}.vxe-table--tree-icon-wrapper{position:absolute;top:50%;width:1em;height:1em;text-align:center;-webkit-transform:translateY(-50%);transform:translateY(-50%);-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;cursor:pointer}.vxe-table--tree-icon{position:absolute;left:0;top:.3em;width:0;height:0;border-style:solid;border-width:.5em;border-top-color:#939599;border-right-color:transparent;border-bottom-color:transparent;border-left-color:transparent}.vxe-table--tree-cell{display:block;padding-left:1.5em}.vxe-table input[type="checkbox"],.vxe-table input[type="radio"],.vxe-table input[type="checkbox"]+span,.vxe-table input[type="radio"]+span{vertical-align:middle;}'
 
@@ -152,13 +154,14 @@ function getLabelData ($xetable, opts, columns, datas) {
 }
 
 function getExportData ($xetable, opts) {
+  const { columnFilterMethod, dataFilterMethod } = opts
   let columns = opts.columns
   let datas = opts.data
-  if (opts.columnFilterMethod) {
-    columns = columns.filter(opts.columnFilterMethod)
+  if (columnFilterMethod) {
+    columns = columns.filter((column, index) => columnFilterMethod({ column, $columnIndex: index }))
   }
-  if (opts.dataFilterMethod) {
-    datas = datas.filter(opts.dataFilterMethod)
+  if (dataFilterMethod) {
+    datas = datas.filter((row, index) => dataFilterMethod({ row, $rowIndex: index }))
   }
   return { columns, datas: getLabelData($xetable, opts, columns, datas) }
 }
@@ -179,6 +182,11 @@ function getFooterCellValue ($xetable, opts, items, column) {
   const _columnIndex = $xetable._getColumnIndex(column)
   const cellValue = exportLabelMethod ? exportLabelMethod({ $table: $xetable, items, itemIndex: _columnIndex, _columnIndex, column }) : XEUtils.toString(items[_columnIndex])
   return cellValue
+}
+
+function getFooterData (opts, footerData) {
+  const { footerFilterMethod } = opts
+  return footerFilterMethod ? footerData.filter((items, index) => footerFilterMethod({ items, $rowIndex: index })) : footerData
 }
 
 function getCsvCellTypeLabel (column, cellValue) {
@@ -211,7 +219,7 @@ function toCsv ($xetable, opts, columns, datas) {
   })
   if (opts.isFooter) {
     const footerData = $xetable.footerData
-    const footers = opts.footerFilterMethod ? footerData.filter(opts.footerFilterMethod) : footerData
+    const footers = getFooterData(opts, footerData)
     footers.forEach(rows => {
       content += columns.map(column => `"${getFooterCellValue($xetable, opts, rows, column)}"`).join(',') + '\n'
     })
@@ -229,7 +237,7 @@ function toTxt ($xetable, opts, columns, datas) {
   })
   if (opts.isFooter) {
     const footerData = $xetable.footerData
-    const footers = opts.footerFilterMethod ? footerData.filter(opts.footerFilterMethod) : footerData
+    const footers = getFooterData(opts, footerData)
     footers.forEach(rows => {
       content += columns.map(column => `${getFooterCellValue($xetable, opts, rows, column)}`).join(',') + '\n'
     })
@@ -280,9 +288,9 @@ function toHtml ($xetable, opts, columns, datas) {
         classNames.push(`col--${headAlign}`)
       }
       if (column.type === 'checkbox') {
-        return `<td class="${classNames.join(' ')}"><div ${isPrint ? '' : `style="width: ${column.renderWidth}px"`}><input type="checkbox" class="${allCls}" ${isAllSelected ? 'checked' : ''}><span>${cellTitle}</span></div></td>`
+        return `<th class="${classNames.join(' ')}"><div ${isPrint ? '' : `style="width: ${column.renderWidth}px"`}><input type="checkbox" class="${allCls}" ${isAllSelected ? 'checked' : ''}><span>${formatText(cellTitle, true)}</span></div></th>`
       }
-      return `<th class="${classNames.join(' ')}" title="${cellTitle}"><div ${isPrint ? '' : `style="width: ${column.renderWidth}px"`}><span>${cellTitle}</span></div></th>`
+      return `<th class="${classNames.join(' ')}" title="${cellTitle}"><div ${isPrint ? '' : `style="width: ${column.renderWidth}px"`}><span>${formatText(cellTitle, true)}</span></div></th>`
     }).join('')}</tr></thead>`
   }
   if (datas.length) {
@@ -314,7 +322,7 @@ function toHtml ($xetable, opts, columns, datas) {
           } else if (column.type === 'checkbox') {
             return `<td class="${classNames.join(' ')}"><div ${isPrint ? '' : `style="width: ${column.renderWidth}px"`}><input type="checkbox" ${item._checkboxDisabled ? 'disabled ' : ''}${cellValue === true || cellValue === 'true' ? 'checked' : ''}><span>${item._checkboxLabel}</span></div></td>`
           }
-          return `<td class="${classNames.join(' ')}" title="${cellValue}"><div ${isPrint ? '' : `style="width: ${column.renderWidth}px"`}>${cellValue}</div></td>`
+          return `<td class="${classNames.join(' ')}" title="${cellValue}"><div ${isPrint ? '' : `style="width: ${column.renderWidth}px"`}>${formatText(cellValue, true)}</div></td>`
         }).join('') + '</tr>'
       })
     } else {
@@ -331,7 +339,7 @@ function toHtml ($xetable, opts, columns, datas) {
           } else if (column.type === 'checkbox') {
             return `<td class="${classNames.join(' ')}"><div ${isPrint ? '' : `style="width: ${column.renderWidth}px"`}><input type="checkbox" ${item._checkboxDisabled ? 'disabled ' : ''}${cellValue === true || cellValue === 'true' ? 'checked' : ''}><span>${item._checkboxLabel}</span></div></td>`
           }
-          return `<td class="${classNames.join(' ')}" title="${cellValue}"><div ${isPrint ? '' : `style="width: ${column.renderWidth}px"`}>${cellValue}</div></td>`
+          return `<td class="${classNames.join(' ')}" title="${cellValue}"><div ${isPrint ? '' : `style="width: ${column.renderWidth}px"`}>${formatText(cellValue, true)}</div></td>`
         }).join('') + '</tr>'
       })
     }
@@ -339,7 +347,7 @@ function toHtml ($xetable, opts, columns, datas) {
   }
   if (opts.isFooter) {
     const footerData = $xetable.footerData
-    const footers = opts.footerFilterMethod ? footerData.filter(opts.footerFilterMethod) : footerData
+    const footers = getFooterData(opts, footerData)
     if (footers.length) {
       html += '<tfoot>'
       footers.forEach(rows => {
@@ -350,7 +358,7 @@ function toHtml ($xetable, opts, columns, datas) {
           if (footAlign) {
             classNames.push(`col--${footAlign}`)
           }
-          return `<td class="${classNames.join(' ')}" title="${cellValue}"><div ${isPrint ? '' : `style="width: ${column.renderWidth}px"`}>${cellValue}</div></td>`
+          return `<td class="${classNames.join(' ')}" title="${cellValue}"><div ${isPrint ? '' : `style="width: ${column.renderWidth}px"`}>${formatText(cellValue, true)}</div></td>`
         }).join('')}</tr>`
       })
       html += '</tfoot>'
@@ -389,7 +397,7 @@ function toXML ($xetable, opts, columns, datas) {
   })
   if (opts.isFooter) {
     const footerData = $xetable.footerData
-    const footers = opts.footerFilterMethod ? footerData.filter(opts.footerFilterMethod) : footerData
+    const footers = getFooterData(opts, footerData)
     footers.forEach(rows => {
       xml += `<Row>${columns.map(column => `<Cell><Data ss:Type="String">${getFooterCellValue($xetable, opts, rows, column)}</Data></Cell>`).join('')}</Row>`
     })
@@ -676,7 +684,7 @@ export default {
         // dataFilterMethod: null,
         // footerFilterMethod: null,
         // exportMethod: null,
-        columnFilterMethod: columns && columns.length ? null : column => defaultFilterExportColumn(column)
+        columnFilterMethod: columns && columns.length ? null : ({ column }) => defaultFilterExportColumn(column)
       }, exportOpts, options, {
         columns: expColumns
       })

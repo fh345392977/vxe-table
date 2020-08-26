@@ -1,8 +1,10 @@
 import XEUtils from 'xe-utils/methods/xe-utils'
 import GlobalConfig from '../../conf'
+import vSize from '../../mixins/size'
 
 export default {
   name: 'VxePager',
+  mixins: [vSize],
   props: {
     size: { type: String, default: () => GlobalConfig.pager.size || GlobalConfig.size },
     // 自定义布局
@@ -42,9 +44,6 @@ export default {
     }
   },
   computed: {
-    vSize () {
-      return this.size || this.$parent.size || this.$parent.vSize
-    },
     isSizes () {
       return this.layouts.some(name => name === 'Sizes')
     },
@@ -61,6 +60,17 @@ export default {
     },
     offsetNumber () {
       return Math.floor((this.pagerCount - 2) / 2)
+    },
+    sizeList () {
+      return this.pageSizes.map(item => {
+        if (XEUtils.isNumber(item)) {
+          return {
+            value: item,
+            label: `${XEUtils.template(GlobalConfig.i18n('vxe.pager.pagesize'), [item])}`
+          }
+        }
+        return { value: '', label: '', ...item }
+      })
     }
   },
   render (h) {
@@ -199,12 +209,7 @@ export default {
         props: {
           value: this.pageSize,
           placement: 'top',
-          options: this.pageSizes.map(num => {
-            return {
-              value: num,
-              label: `${XEUtils.template(GlobalConfig.i18n('vxe.pager.pagesize'), [num])}`
-            }
-          })
+          options: this.sizeList
         },
         on: {
           change: ({ value }) => {

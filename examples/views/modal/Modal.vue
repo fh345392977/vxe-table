@@ -9,7 +9,7 @@
       VXETable.modal.message(message, title, options) 创建消息框<br>
       VXETable.modal.alert(message, title, options) 创建提示框<br>
       VXETable.modal.confirm(message, title, options) 创建确认框<br>
-      VXETable.modal.close(id?: string) 手动关闭动态创建的窗口<br>
+      VXETable.modal.close(id?: string) 手动关闭当前活动的窗口<br>
       全局实例对象：VXETable.modal 或者 ModalController<br>
     </p>
 
@@ -81,7 +81,7 @@
 
     <p>
       <vxe-button @click="value5 = !value5">基本窗口</vxe-button>
-      <vxe-modal v-model="value5" :lock-scroll="false" width="600" show-footer>
+      <vxe-modal v-model="value5" width="600" show-footer>
         <template v-slot>
           <vxe-table
             show-overflow
@@ -367,7 +367,7 @@ export default {
 
         <p>
           <vxe-button @click="value5 = !value5">基本窗口</vxe-button>
-          <vxe-modal v-model="value5" :lock-scroll="false" width="600" show-footer>
+          <vxe-modal v-model="value5" width="600" show-footer>
             <template v-slot>
               <vxe-table
                 show-overflow

@@ -9,12 +9,10 @@ export default {
   props: {
     tableData: Array,
     tableColumn: Array,
-    visibleColumn: Array,
     tableGroupColumn: Array,
     fixedColumn: Array,
     size: String,
-    fixedType: String,
-    isGroup: Boolean
+    fixedType: String
   },
   data () {
     return {
@@ -42,7 +40,7 @@ export default {
   },
   render (h) {
     const { _e, $parent: $xetable, fixedType, headerColumn, fixedColumn } = this
-    const { $listeners: tableListeners, tId, resizable, border, columnKey, headerRowClassName, headerCellClassName, headerRowStyle, headerCellStyle, showHeaderOverflow: allColumnHeaderOverflow, headerAlign: allHeaderAlign, align: allAlign, highlightCurrentColumn, currentColumn, scrollXLoad, overflowX, scrollbarWidth, sortOpts } = $xetable
+    const { $listeners: tableListeners, tId, resizable, border, columnKey, headerRowClassName, headerCellClassName, headerRowStyle, headerCellStyle, showHeaderOverflow: allColumnHeaderOverflow, headerAlign: allHeaderAlign, align: allAlign, highlightCurrentColumn, currentColumn, scrollXLoad, overflowX, scrollbarWidth, sortOpts, mouseConfig } = $xetable
     let { tableColumn } = this
     // 横向滚动渲染
     if (scrollXLoad) {
@@ -124,6 +122,10 @@ export default {
             if (tableListeners['header-cell-dblclick']) {
               thOns.dblclick = evnt => $xetable.triggerHeaderCellDBLClickEvent(evnt, params)
             }
+            // 按下事件处理
+            if (mouseConfig) {
+              thOns.mousedown = evnt => $xetable.triggerHeaderCellMousedownEvent(evnt, params)
+            }
             return h('th', {
               class: ['vxe-header--column', column.id, {
                 [`col--${headAlign}`]: headAlign,
@@ -184,7 +186,8 @@ export default {
   },
   methods: {
     uploadColumn () {
-      this.headerColumn = this.isGroup ? convertToRows(this.tableGroupColumn) : [this.$parent.scrollXLoad && this.fixedType ? this.fixedColumn : this.tableColumn]
+      const { $parent: $xetable } = this
+      this.headerColumn = $xetable.isGroup ? convertToRows(this.tableGroupColumn) : [$xetable.scrollXLoad && this.fixedType ? this.fixedColumn : this.tableColumn]
     },
     resizeMousedown (evnt, params) {
       const { column } = params
@@ -237,12 +240,16 @@ export default {
           // 右侧固定列（不允许超过左侧固定列、不允许超过左边距）
           dragMinLeft = (leftContainer ? leftContainer.clientWidth : 0) + fixedOffsetWidth + minInterval
           left = Math.min(left, dragPosLeft + cell.clientWidth - minInterval)
+        } else {
+          dragMinLeft = Math.max(tableBodyElem.scrollLeft, dragMinLeft)
+          left = Math.min(left, tableBodyElem.clientWidth + tableBodyElem.scrollLeft - 40)
         }
         dragLeft = Math.max(left, dragMinLeft)
         resizeBarElem.style.left = `${dragLeft - scrollLeft}px`
       }
+
       $xetable._isResize = true
-      DomTools.addClass($xetable.$el, 'c--resize')
+      DomTools.addClass($xetable.$el, 'drag--resize')
       resizeBarElem.style.display = 'block'
       document.onmousemove = updateEvent
       document.onmouseup = function (evnt) {
@@ -253,9 +260,11 @@ export default {
         $xetable._isResize = false
         $xetable._lastResizeTime = Date.now()
         $xetable.analyColumnWidth()
-        $xetable.recalculate(true)
-        DomTools.removeClass($xetable.$el, 'c--resize')
         $xetable.saveCustomResizable()
+        $xetable.recalculate(true).then(() => {
+          $xetable.updateCellAreas()
+        })
+        DomTools.removeClass($xetable.$el, 'drag--resize')
         $xetable.emitEvent('resizable-change', params, evnt)
       }
       updateEvent(evnt)

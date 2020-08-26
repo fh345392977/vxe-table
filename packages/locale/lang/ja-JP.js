@@ -14,6 +14,7 @@ export default {
       reqProp: '必要な "{{0}}" パラメーターが欠落しているため、エラーが発生する可能性があります',
       emptyProp: '"{{0}}" propertyはemptyが許可されていません',
       errProp: 'サポートされていないパラメーター "{{0}}"，"{{1}}" の可能性があります',
+      fieldRepet: '列フィールド "{{0}}" が重複しているため、機能が使えなくなることがあります。',
       notFunc: 'method "{{0}}" はありません',
       notSlot: 'slot "{{0}}" はありません',
       noTree: 'Tree structureは "{{0}}" をサポートしていません',
@@ -26,6 +27,49 @@ export default {
       notExp: 'ブラウザはインポート/エクスポートをサポートしていません',
       impFields: 'インポートに失敗しました。フィールド名とデータ形式が正しいかどうかを確認してください',
       treeNotImp: 'ツリーテーブルはインポートをサポートしていません'
+    },
+    renderer: {
+      search: '搜索',
+      cases: {
+        equal: '等于',
+        unequal: '不等于',
+        gt: '大于',
+        ge: '大于或等于',
+        lt: '小于',
+        le: '小于或等于',
+        begin: '开头是',
+        notbegin: '开头不是',
+        endin: '结尾是',
+        notendin: '结尾不是',
+        include: '包含',
+        exclude: '不包含',
+        between: '介于',
+        custom: '自定义筛选',
+        insensitive: '不区分大小写'
+      },
+      combination: {
+        menus: {
+          sortAsc: '升序',
+          sortDesc: '降序',
+          fixedColumn: '锁定列',
+          fixedGroup: '锁定组',
+          cancelFixed: '取消锁定',
+          fixedLeft: '锁定左侧',
+          fixedRight: '锁定右侧',
+          clearFilter: '清除筛选',
+          textOption: '文本筛选',
+          numberOption: '数值筛选'
+        },
+        popup: {
+          title: '自定义筛选的方式',
+          currColumnTitle: '当前列：',
+          and: '与',
+          or: '或',
+          describeHtml: '可用 ? 代表单个字符<br/>用 * 代表任意多个字符'
+        },
+        empty: '(空白)',
+        notData: '无匹配项'
+      }
     },
     table: {
       emptyText: 'データがありません',

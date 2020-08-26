@@ -41,7 +41,8 @@
           //     filterMethod: null
           //   },
           //   expandConfig: {
-          //     trigger: 'default'
+          //     trigger: 'default',
+          //     showIcon: true
           //   },
           //   treeConfig: {
           //     children: 'children',
@@ -143,7 +144,8 @@
           // },
           // select: {
           //   size: null,
-          //   transfer: false
+          //   transfer: false,
+          //   multiCharOverflow: 8
           // },
           // toolbar: {
           //   size: null,

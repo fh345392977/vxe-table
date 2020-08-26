@@ -2,11 +2,11 @@ import XEUtils from 'xe-utils/methods/xe-utils'
 import GlobalConfig from '../../conf'
 import VXETable from '../../v-x-e-table'
 import VxeTableBody from '../../body'
+import vSize from '../../mixins/size'
 import { UtilTools, DomTools, GlobalEvent, ResizeEvent } from '../../tools'
 import methods from './methods'
 
-const { getColumnList, hasChildrenList } = UtilTools
-const { browse, calcHeight } = DomTools
+const { browse } = DomTools
 
 /**
  * 渲染浮固定列
@@ -17,7 +17,7 @@ const { browse, calcHeight } = DomTools
  * @param {String} fixedType 固定列类型
  */
 function renderFixed (h, $xetable, fixedType) {
-  const { tableData, tableColumn, visibleColumn, tableGroupColumn, isGroup, vSize, showHeader, showFooter, columnStore, footerData } = $xetable
+  const { tableData, tableColumn, tableGroupColumn, vSize, showHeader, showFooter, columnStore, footerData } = $xetable
   const fixedColumn = columnStore[`${fixedType}List`]
   return h('div', {
     class: `vxe-table--fixed-${fixedType}-wrapper`,
@@ -28,11 +28,9 @@ function renderFixed (h, $xetable, fixedType) {
         fixedType,
         tableData,
         tableColumn,
-        visibleColumn,
         tableGroupColumn,
         size: vSize,
-        fixedColumn,
-        isGroup
+        fixedColumn
       },
       ref: `${fixedType}Header`
     }) : null,
@@ -41,10 +39,8 @@ function renderFixed (h, $xetable, fixedType) {
         fixedType,
         tableData,
         tableColumn,
-        visibleColumn,
         fixedColumn,
-        size: vSize,
-        isGroup
+        size: vSize
       },
       ref: `${fixedType}Body`
     }),
@@ -52,7 +48,6 @@ function renderFixed (h, $xetable, fixedType) {
       props: {
         footerData,
         tableColumn,
-        visibleColumn,
         fixedColumn,
         fixedType,
         size: vSize
@@ -64,6 +59,7 @@ function renderFixed (h, $xetable, fixedType) {
 
 export default {
   name: 'VxeTable',
+  mixins: [vSize],
   props: {
     /** 基本属性 */
     id: String,
@@ -133,7 +129,11 @@ export default {
     headerRowStyle: [Object, Function],
     // 给表尾行附加样式
     footerRowStyle: [Object, Function],
-    // 合并行或列
+    // 合并指定单元格
+    mergeCells: Array,
+    // 合并指定的表尾
+    mergeFooterItems: Array,
+    // 自定义合并行或列的方法
     spanMethod: Function,
     // 表尾合并行或列
     footerSpanMethod: Function,
@@ -143,10 +143,6 @@ export default {
     showHeaderOverflow: { type: [Boolean, String], default: () => GlobalConfig.table.showHeaderOverflow },
     // 设置表尾所有内容过长时显示为省略号
     showFooterOverflow: { type: [Boolean, String], default: () => GlobalConfig.table.showFooterOverflow },
-    // 所有列宽度
-    columnWidth: [Number, String],
-    // 所有列最小宽度，把剩余宽度按比例分配
-    columnMinWidth: [Number, String],
 
     /** 高级属性 */
     // 主键配置
@@ -159,6 +155,8 @@ export default {
     autoResize: { type: Boolean, default: () => GlobalConfig.table.autoResize },
     // 是否自动根据状态属性去更新响应式表格宽高
     syncResize: [Boolean, String, Number],
+    // 设置列的默认参数，仅对部分支持的属性有效
+    columnConfig: Object,
     // 序号配置项
     seqConfig: Object,
     // 排序配置项
@@ -221,19 +219,14 @@ export default {
       default: null
     }
   },
-  mixins: [],
   data () {
     return {
       tId: `${XEUtils.uniqueId()}`,
       isCloak: false,
-      // 列分组配置
-      collectColumn: [],
+      // 低性能的静态列
+      staticColumns: [],
       // 渲染的列分组
       tableGroupColumn: [],
-      // 完整所有列
-      tableFullColumn: [],
-      // 渲染所有列
-      visibleColumn: [],
       // 可视区渲染的列
       tableColumn: [],
       // 渲染中的数据
@@ -254,6 +247,8 @@ export default {
       rowHeight: 0,
       // 表格父容器的高度
       parentHeight: 0,
+      // 是否使用分组表头
+      isGroup: false,
       // 复选框属性，是否全选
       isAllSelected: false,
       // 复选框属性，有选中且非全选状态
@@ -282,6 +277,10 @@ export default {
       treeLazyLoadeds: [],
       // 树节点不确定状态的列表
       treeIndeterminates: [],
+      // 合并单元格的对象集
+      mergeList: [],
+      // 合并表尾数据的对象集
+      mergeFooterList: [],
       // 是否已经加载了筛选
       hasFilterPanel: false,
       // 当前选中的筛选列
@@ -399,9 +398,6 @@ export default {
     }
   },
   computed: {
-    vSize () {
-      return this.size || this.$parent.size || this.$parent.vSize
-    },
     validOpts () {
       return Object.assign({ message: 'default' }, GlobalConfig.table.validConfig, this.validConfig)
     },
@@ -419,6 +415,9 @@ export default {
         mini: 36
       }
     },
+    columnOpts () {
+      return Object.assign({}, this.columnConfig)
+    },
     seqOpts () {
       return Object.assign({ startIndex: 0 }, GlobalConfig.table.seqConfig, this.seqConfig)
     },
@@ -429,7 +428,7 @@ export default {
       return Object.assign({}, GlobalConfig.table.checkboxConfig, this.checkboxConfig)
     },
     tooltipOpts () {
-      return Object.assign({ size: this.vSize, leaveDelay: 300 }, GlobalConfig.table.tooltipConfig, this.tooltipConfig)
+      return Object.assign({ leaveDelay: 300 }, GlobalConfig.table.tooltipConfig, this.tooltipConfig)
     },
     vaildTipOpts () {
       return Object.assign({ isArrow: false }, this.tooltipOpts)
@@ -446,15 +445,11 @@ export default {
     mouseOpts () {
       return Object.assign({}, GlobalConfig.table.mouseConfig, this.mouseConfig)
     },
-    // 是否使用了分组表头
-    isGroup () {
-      return this.collectColumn.some(hasChildrenList)
+    keyboardOpts () {
+      return Object.assign({}, this.keyboardConfig)
     },
     hasTip () {
       return VXETable._tooltip
-    },
-    isResizable () {
-      return this.resizable || this.tableFullColumn.some(column => column.resizable)
     },
     headerCtxMenu () {
       const headerOpts = this.ctxMenuOpts.header
@@ -521,12 +516,6 @@ export default {
       }
       return 'default'
     },
-    customHeight () {
-      return calcHeight(this, 'height')
-    },
-    customMaxHeight () {
-      return calcHeight(this, 'maxHeight')
-    },
     /**
      * 判断列全选的复选框是否禁用
      */
@@ -561,25 +550,8 @@ export default {
         }
       })
     },
-    collectColumn (value) {
-      const tableFullColumn = getColumnList(value)
-      this.tableFullColumn = tableFullColumn
-      this.cacheColumnMap()
-      this.restoreCustomStorage()
-      this.refreshColumn().then(() => {
-        if (this.scrollXLoad) {
-          this.loadScrollXData(true)
-        }
-      })
-      this.handleTableData(true)
-      if ((this.scrollXLoad || this.scrollYLoad) && this.expandColumn) {
-        UtilTools.warn('vxe.error.scrollErrProp', ['column.type=expand'])
-      }
-      this.$nextTick(() => {
-        if (this.$toolbar) {
-          this.$toolbar.syncUpdate({ collectColumn: value, $table: this })
-        }
-      })
+    staticColumns (value) {
+      this.handleColumn(value)
     },
     tableColumn () {
       this.analyColumnWidth()
@@ -618,7 +590,7 @@ export default {
     }
   },
   created () {
-    const { sXOpts, scrollXStore, sYOpts, scrollYStore, data, editOpts, treeOpts, treeConfig, showOverflow } = Object.assign(this, {
+    const { scrollXStore, sYOpts, scrollYStore, data, editOpts, treeOpts, treeConfig, showOverflow } = Object.assign(this, {
       tZindex: 0,
       elemStore: {},
       // 存放横向 X 虚拟滚动相关的信息
@@ -651,6 +623,12 @@ export default {
       // 完整数据、条件处理后
       tableFullData: [],
       afterFullData: [],
+      // 收集的列配置（带分组）
+      collectColumn: [],
+      // 完整所有列（不带分组）
+      tableFullColumn: [],
+      // 渲染所有列
+      visibleColumn: [],
       // 缓存数据集
       fullAllDataRowMap: new Map(),
       fullAllDataRowIdData: {},
@@ -677,7 +655,10 @@ export default {
       UtilTools.error('vxe.error.reqProp', ['id'])
     }
     if (this.treeConfig && this.checkboxOpts.range) {
-      UtilTools.warn('vxe.error.noTree', ['checkbox-config.range'])
+      UtilTools.error('vxe.error.noTree', ['checkbox-config.range'])
+    }
+    if (this.treeConfig && this.mouseOpts.area) {
+      UtilTools.error('vxe.error.noTree', ['mouse-config.area'])
     }
     // 检查是否有安装需要的模块
     let errorModuleName
@@ -695,16 +676,14 @@ export default {
     }
     Object.assign(scrollYStore, {
       startIndex: 0,
-      visibleIndex: 0,
-      adaptive: sYOpts.adaptive !== false,
-      renderSize: XEUtils.toNumber(sYOpts.rSize),
-      offsetSize: XEUtils.toNumber(sYOpts.oSize)
+      endIndex: 0,
+      visibleSize: 0,
+      adaptive: sYOpts.adaptive !== false
     })
     Object.assign(scrollXStore, {
       startIndex: 0,
-      visibleIndex: 0,
-      renderSize: XEUtils.toNumber(sXOpts.rSize),
-      offsetSize: XEUtils.toNumber(sXOpts.oSize)
+      endIndex: 0,
+      visibleSize: 0
     })
     if (this.cloak) {
       this.isCloak = true
@@ -719,6 +698,9 @@ export default {
       }
       this.updateStyle()
     })
+    GlobalEvent.on(this, 'paste', this.handleGlobalPasteEvent)
+    GlobalEvent.on(this, 'copy', this.handleGlobalCopyEvent)
+    GlobalEvent.on(this, 'cut', this.handleGlobalCutEvent)
     GlobalEvent.on(this, 'mousedown', this.handleGlobalMousedownEvent)
     GlobalEvent.on(this, 'blur', this.handleGlobalBlurEvent)
     GlobalEvent.on(this, 'mousewheel', this.handleGlobalMousewheelEvent)
@@ -742,7 +724,6 @@ export default {
     this.preventEvent(null, 'activated')
   },
   deactivated () {
-    this.elemStore = {}
     this.preventEvent(null, 'deactivated')
   },
   beforeDestroy () {
@@ -758,6 +739,9 @@ export default {
     this.preventEvent(null, 'beforeDestroy')
   },
   destroyed () {
+    GlobalEvent.off(this, 'paste')
+    GlobalEvent.off(this, 'copy')
+    GlobalEvent.off(this, 'cut')
     GlobalEvent.off(this, 'mousedown')
     GlobalEvent.off(this, 'blur')
     GlobalEvent.off(this, 'mousewheel')
@@ -773,10 +757,8 @@ export default {
       tId,
       tableData,
       tableColumn,
-      visibleColumn,
       tableGroupColumn,
       isGroup,
-      isResizable,
       isCtxMenu,
       loading,
       isCloak,
@@ -840,6 +822,7 @@ export default {
         'is--round': this.round,
         't--stripe': stripe,
         't--selected': mouseConfig && mouseOpts.selected,
+        'is--area': mouseConfig && mouseOpts.area,
         'row--highlight': highlightHoverRow,
         'column--highlight': highlightHoverColumn,
         'is--loading': isCloak || loading,
@@ -871,10 +854,8 @@ export default {
           props: {
             tableData,
             tableColumn,
-            visibleColumn,
             tableGroupColumn,
-            size: vSize,
-            isGroup
+            size: vSize
           }
         }) : _e(),
         /**
@@ -885,9 +866,7 @@ export default {
           props: {
             tableData,
             tableColumn,
-            visibleColumn,
-            size: vSize,
-            isGroup
+            size: vSize
           }
         }),
         /**
@@ -897,7 +876,6 @@ export default {
           props: {
             footerData,
             tableColumn,
-            visibleColumn,
             size: vSize
           },
           ref: 'tableFooter'
@@ -931,13 +909,13 @@ export default {
       /**
        * 列宽线
        */
-      isResizable ? h('div', {
+      h('div', {
         class: 'vxe-table--resizable-bar',
         style: overflowX ? {
           'padding-bottom': `${scrollbarHeight}px`
         } : null,
         ref: 'resizeBar'
-      }) : _e(),
+      }),
       /**
        * 加载中
        */
@@ -982,8 +960,7 @@ export default {
        */
       this.customConfig ? h('vxe-custom-panel', {
         props: {
-          storeData: this.customStore,
-          collectColumn: this.collectColumn
+          storeData: this.customStore
         }
       }) : _e(),
       h('div', {

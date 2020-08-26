@@ -4,8 +4,8 @@ import Cell from '../../cell'
 import VXETable from '../../v-x-e-table'
 import { UtilTools, DomTools } from '../../tools'
 
-const { getRowid, getRowkey, setCellValue, getCellLabel, hasChildrenList } = UtilTools
-const { browse, hasClass, addClass, removeClass, triggerEvent, getEventTargetNode } = DomTools
+const { getRowid, getRowkey, setCellValue, getCellLabel, hasChildrenList, getColumnList } = UtilTools
+const { browse, calcHeight, hasClass, addClass, removeClass, getEventTargetNode } = DomTools
 
 const isWebkit = browse['-webkit'] && !browse.edge
 const debounceScrollYDuration = browse.msie ? 40 : 20
@@ -69,6 +69,163 @@ function handleReserveRow (_vm, reserveRowMap) {
   return reserveList
 }
 
+function computeVirtualX (_vm) {
+  const { $refs, visibleColumn } = _vm
+  const { tableBody } = $refs
+  const tableBodyElem = tableBody ? tableBody.$el : null
+  if (tableBodyElem) {
+    const { scrollLeft, clientWidth } = tableBodyElem
+    const endWidth = scrollLeft + clientWidth
+    let toVisibleIndex = -1
+    let cWidth = 0
+    let visibleSize = 0
+    for (let colIndex = 0, colLen = visibleColumn.length; colIndex < colLen; colIndex++) {
+      cWidth += visibleColumn[colIndex].renderWidth
+      if (toVisibleIndex === -1 && scrollLeft < cWidth) {
+        toVisibleIndex = colIndex
+      }
+      if (toVisibleIndex >= 0) {
+        visibleSize++
+        if (cWidth > endWidth) {
+          break
+        }
+      }
+    }
+    return { toVisibleIndex: Math.max(0, toVisibleIndex), visibleSize: Math.max(8, visibleSize) }
+  }
+  return { toVisibleIndex: 0, visibleSize: 8 }
+}
+
+function computeVirtualY (_vm) {
+  const { $refs, vSize, rowHeightMaps } = _vm
+  const { tableHeader, tableBody } = $refs
+  const tableBodyElem = tableBody ? tableBody.$el : null
+  if (tableBodyElem) {
+    const tableHeaderElem = tableHeader ? tableHeader.$el : null
+    let rowHeight = 0
+    let firstTrElem
+    firstTrElem = tableBodyElem.querySelector('tr')
+    if (!firstTrElem && tableHeaderElem) {
+      firstTrElem = tableHeaderElem.querySelector('tr')
+    }
+    if (firstTrElem) {
+      rowHeight = firstTrElem.clientHeight
+    }
+    if (!rowHeight) {
+      rowHeight = rowHeightMaps[vSize || 'default']
+    }
+    const visibleSize = Math.max(8, Math.ceil(tableBodyElem.clientHeight / rowHeight) + 2)
+    return { rowHeight, visibleSize }
+  }
+  return { rowHeight: 0, visibleSize: 8 }
+}
+
+function handleMergerXOffserIndex (list, offsetItem) {
+  const { startIndex, endIndex } = offsetItem
+  for (let mcIndex = 0, len = list.length; mcIndex < len; mcIndex++) {
+    const mergeItem = list[mcIndex]
+    const { col: mergeColIndex, colspan: mergeColspan } = mergeItem
+    const mergeEndColIndex = mergeColIndex + mergeColspan
+    if (mergeColIndex < startIndex && startIndex <= mergeEndColIndex) {
+      offsetItem.startIndex = mergeColIndex
+    }
+    if (mergeColIndex < endIndex && endIndex <= mergeEndColIndex) {
+      offsetItem.endIndex = mergeEndColIndex
+    }
+  }
+}
+
+function handleMergerYOffserIndex (list, offsetItem) {
+  const { startIndex, endIndex } = offsetItem
+  for (let mcIndex = 0, len = list.length; mcIndex < len; mcIndex++) {
+    const mergeItem = list[mcIndex]
+    const { row: mergeRowIndex, rowspan: mergeRowspan } = mergeItem
+    const mergeEndRowIndex = mergeRowIndex + mergeRowspan
+    if (mergeRowIndex < startIndex && startIndex <= mergeEndRowIndex) {
+      offsetItem.startIndex = mergeRowIndex
+    }
+    if (mergeRowIndex < endIndex && endIndex <= mergeEndRowIndex) {
+      offsetItem.endIndex = mergeEndRowIndex
+    }
+  }
+}
+
+function setMerges (_vm, merges, mList, rowList) {
+  if (merges) {
+    const { treeConfig, visibleColumn } = _vm
+    if (treeConfig) {
+      throw new Error(UtilTools.getLog('vxe.error.noTree', ['merge-footer-items']))
+    }
+    if (!XEUtils.isArray(merges)) {
+      merges = [merges]
+    }
+    merges.forEach(item => {
+      let { row, col, rowspan, colspan } = item
+      if (rowList && XEUtils.isNumber(row)) {
+        row = rowList[row]
+      }
+      if (XEUtils.isNumber(col)) {
+        col = visibleColumn[col]
+      }
+      if ((rowList ? row : XEUtils.isNumber(row)) && col && (rowspan || colspan)) {
+        rowspan = XEUtils.toNumber(rowspan) || 1
+        colspan = XEUtils.toNumber(colspan) || 1
+        if (rowspan > 1 || colspan > 1) {
+          const mcIndex = XEUtils.findIndexOf(mList, item => item._row === row && item._col === col)
+          const mergeItem = mList[mcIndex]
+          if (mergeItem) {
+            mergeItem.rowspan = rowspan
+            mergeItem.colspan = colspan
+            mergeItem._rowspan = rowspan
+            mergeItem._colspan = colspan
+          } else {
+            const mergeRowIndex = rowList ? rowList.indexOf(row) : row
+            const mergeColIndex = visibleColumn.indexOf(col)
+            mList.push({
+              row: mergeRowIndex,
+              col: mergeColIndex,
+              rowspan,
+              colspan,
+              _row: row,
+              _col: col,
+              _rowspan: rowspan,
+              _colspan: colspan
+            })
+          }
+        }
+      }
+    })
+  }
+}
+
+function removeMerges (_vm, merges, mList, rowList) {
+  const rest = []
+  if (merges) {
+    const { treeConfig, visibleColumn } = _vm
+    if (treeConfig) {
+      throw new Error(UtilTools.getLog('vxe.error.noTree', ['merge-cells']))
+    }
+    if (!XEUtils.isArray(merges)) {
+      merges = [merges]
+    }
+    merges.forEach(item => {
+      let { row, col } = item
+      if (rowList && XEUtils.isNumber(row)) {
+        row = rowList[row]
+      }
+      if (XEUtils.isNumber(col)) {
+        col = visibleColumn[col]
+      }
+      const mcIndex = XEUtils.findIndexOf(mList, item => item._row === row && item._col === col)
+      if (mcIndex > -1) {
+        const rItems = mList.splice(mcIndex, 1)
+        rest.push(rItems[0])
+      }
+    })
+  }
+  return rest
+}
+
 const Methods = {
   /**
    * 获取父容器元素
@@ -113,6 +270,8 @@ const Methods = {
     }
     if (this.keyboardConfig || this.mouseConfig) {
       this.clearSelected()
+      this.clearCellAreas()
+      this.clearCopyCellArea()
     }
     return this.clearScroll()
   },
@@ -137,7 +296,7 @@ const Methods = {
   handleTableData (force) {
     const { scrollYLoad, scrollYStore } = this
     const fullData = force ? this.updateAfterFullData() : this.afterFullData
-    this.tableData = scrollYLoad ? fullData.slice(scrollYStore.startIndex, Math.max(scrollYStore.startIndex + scrollYStore.renderSize, 1)) : fullData.slice(0)
+    this.tableData = scrollYLoad ? fullData.slice(scrollYStore.startIndex, scrollYStore.endIndex) : fullData.slice(0)
     return this.$nextTick()
   },
   /**
@@ -145,11 +304,11 @@ const Methods = {
    * @param {Array} datas 数据
    */
   loadTableData (datas) {
-    const { keepSource, treeConfig, editStore, sYOpts, scrollYStore } = this
+    const { keepSource, treeConfig, editStore, sYOpts, scrollYStore, scrollXStore } = this
     const tableFullData = datas ? datas.slice(0) : []
-    const scrollYLoad = !treeConfig && sYOpts.gt > -1 && sYOpts.gt < tableFullData.length
+    const scrollYLoad = !treeConfig && sYOpts.gt > -1 && sYOpts.gt <= tableFullData.length
     scrollYStore.startIndex = 0
-    scrollYStore.visibleIndex = 0
+    scrollXStore.startIndex = 0
     editStore.insertList = []
     editStore.removeList = []
     // 全量数据
@@ -173,12 +332,16 @@ const Methods = {
         UtilTools.warn('vxe.error.scrollErrProp', ['span-method'])
       }
     }
+    this.clearMergeCells()
+    this.clearMergeFooterItems()
     this.handleTableData(true)
     this.updateFooter()
     return this.computeScrollLoad().then(() => {
       // 是否加载了数据
+      if (scrollYLoad) {
+        scrollYStore.endIndex = scrollYStore.visibleSize
+      }
       this.isLoadData = true
-      this.computeRowHeight()
       this.handleReserveStatus()
       this.checkSelectionStatus()
       return this.$nextTick().then(this.recalculate).then(this.refreshScroll)
@@ -189,8 +352,13 @@ const Methods = {
    * @param {Array} datas 数据
    */
   loadData (datas) {
-    this.inited = true
-    return this.loadTableData(datas).then(this.recalculate)
+    return this.loadTableData(datas).then(() => {
+      if (!this.inited) {
+        this.inited = true
+        this.handleDefaults()
+      }
+      this.recalculate()
+    })
   },
   /**
    * 重新加载数据，会清空表格状态
@@ -239,20 +407,44 @@ const Methods = {
   /**
    * 加载列配置
    * 对于表格列需要重载、局部递增场景下可能会用到
-   * @param {ColumnConfig} columns 列配置
+   * @param {ColumnInfo} columns 列配置
    */
   loadColumn (columns) {
-    this.collectColumn = XEUtils.mapTree(columns, column => Cell.createColumn(this, column))
+    const collectColumn = XEUtils.mapTree(columns, column => Cell.createColumn(this, column))
+    this.handleColumn(collectColumn)
     return this.$nextTick()
   },
   /**
    * 加载列配置并恢复到初始状态
    * 对于表格列需要重载、局部递增场景下可能会用到
-   * @param {ColumnConfig} columns 列配置
+   * @param {ColumnInfo} columns 列配置
    */
   reloadColumn (columns) {
     this.clearAll()
     return this.loadColumn(columns)
+  },
+  handleColumn (collectColumn) {
+    this.collectColumn = collectColumn
+    const tableFullColumn = getColumnList(collectColumn)
+    this.tableFullColumn = tableFullColumn
+    this.cacheColumnMap()
+    this.restoreCustomStorage()
+    this.refreshColumn().then(() => {
+      if (this.scrollXLoad) {
+        this.loadScrollXData(true)
+      }
+    })
+    this.clearMergeCells()
+    this.clearMergeFooterItems()
+    this.handleTableData(true)
+    if ((this.scrollXLoad || this.scrollYLoad) && this.expandColumn) {
+      UtilTools.warn('vxe.error.scrollErrProp', ['column.type=expand'])
+    }
+    this.$nextTick(() => {
+      if (this.$toolbar) {
+        this.$toolbar.syncUpdate({ collectColumn, $table: this })
+      }
+    })
   },
   /**
    * 更新数据行的 Map
@@ -263,7 +455,7 @@ const Methods = {
     let { fullDataRowIdData, fullAllDataRowIdData } = this
     const rowkey = getRowkey(this)
     const isLazy = treeConfig && treeOpts.lazy
-    const handleCache = (row, index) => {
+    const handleCache = (row, index, items, path, parent) => {
       let rowid = getRowid(this, row)
       if (!rowid) {
         rowid = getRowUniqueId()
@@ -272,7 +464,7 @@ const Methods = {
       if (isLazy && row[treeOpts.hasChild] && XEUtils.isUndefined(row[treeOpts.children])) {
         row[treeOpts.children] = null
       }
-      const rest = { row, rowid, index: treeConfig ? -1 : index }
+      const rest = { row, rowid, index, items, parent }
       if (source) {
         fullDataRowIdData[rowid] = rest
         fullDataRowMap.set(row, rest)
@@ -301,7 +493,7 @@ const Methods = {
     if (keepSource) {
       matchObj = XEUtils.findTree(tableSourceData, item => rowid === getRowid(this, item), treeOpts)
     }
-    XEUtils.eachTree(childs, (row, index) => {
+    XEUtils.eachTree(childs, (row, index, items, path, parent) => {
       let rowid = getRowid(this, row)
       if (!rowid) {
         rowid = getRowUniqueId()
@@ -310,7 +502,7 @@ const Methods = {
       if (row[hasChild] && XEUtils.isUndefined(row[children])) {
         row[children] = null
       }
-      const rest = { row, rowid, index }
+      const rest = { row, rowid, index, items, parent }
       fullDataRowIdData[rowid] = rest
       fullDataRowMap.set(row, rest)
       fullAllDataRowIdData[rowid] = rest
@@ -325,16 +517,20 @@ const Methods = {
    * 牺牲数据组装的耗时，用来换取使用过程中的流畅
    */
   cacheColumnMap () {
-    const { isGroup, tableFullColumn, collectColumn, fullColumnMap } = this
+    const { tableFullColumn, collectColumn, fullColumnMap } = this
     const fullColumnIdData = this.fullColumnIdData = {}
     const fullColumnFieldData = this.fullColumnFieldData = {}
+    const isGroup = collectColumn.some(hasChildrenList)
     let expandColumn
     let treeNodeColumn
     let hasFixed
-    const handleFunc = (column, index) => {
+    const handleFunc = (column, index, items, path, parent) => {
       const { id: colid, property, fixed, type, treeNode } = column
-      const rest = { column, colid, index }
+      const rest = { column, colid, index, items, parent }
       if (property) {
+        if (fullColumnFieldData[property]) {
+          UtilTools.warn('vxe.error.fieldRepet', [property])
+        }
         fullColumnFieldData[property] = rest
       }
       if (!hasFixed && fixed) {
@@ -352,14 +548,18 @@ const Methods = {
     if (isGroup) {
       XEUtils.eachTree(collectColumn, (column, index, items, path, parent, nodes) => {
         column.level = nodes.length
-        handleFunc(column, index)
+        handleFunc(column, index, items, path, parent)
       })
     } else {
       tableFullColumn.forEach(handleFunc)
     }
-    if (hasFixed && expandColumn) {
+    if (expandColumn && hasFixed) {
       UtilTools.warn('vxe.error.errConflicts', ['column.fixed', 'column.type=expand'])
     }
+    if (expandColumn && this.mouseOpts.area) {
+      UtilTools.error('vxe.error.errConflicts', ['mouse-config.area', 'column.type=expand'])
+    }
+    this.isGroup = isGroup
     this.treeNodeColumn = treeNodeColumn
     this.expandColumn = expandColumn
   },
@@ -369,18 +569,11 @@ const Methods = {
    */
   getRowNode (tr) {
     if (tr) {
-      const { treeConfig, treeOpts, tableFullData, fullAllDataRowIdData } = this
+      const { fullAllDataRowIdData } = this
       const rowid = tr.getAttribute('data-rowid')
-      if (treeConfig) {
-        const matchObj = XEUtils.findTree(tableFullData, row => getRowid(this, row) === rowid, treeOpts)
-        if (matchObj) {
-          return matchObj
-        }
-      } else {
-        if (fullAllDataRowIdData[rowid]) {
-          const rest = fullAllDataRowIdData[rowid]
-          return { item: rest.row, index: rest.index, items: tableFullData }
-        }
+      const rest = fullAllDataRowIdData[rowid]
+      if (rest) {
+        return { rowid: rest.rowid, item: rest.row, index: rest.index, items: rest.items, parent: rest.parent }
       }
     }
     return null
@@ -391,10 +584,12 @@ const Methods = {
    */
   getColumnNode (cell) {
     if (cell) {
-      const { fullColumnIdData, tableFullColumn } = this
+      const { fullColumnIdData } = this
       const colid = cell.getAttribute('data-colid')
-      const { column, index } = fullColumnIdData[colid]
-      return { item: column, index, items: tableFullColumn }
+      const rest = fullColumnIdData[colid]
+      if (rest) {
+        return { colid: rest.colid, item: rest.column, index: rest.index, items: rest.items, parent: rest.parent }
+      }
     }
     return null
   },
@@ -421,28 +616,28 @@ const Methods = {
   },
   /**
    * 根据 column 获取相对于 columns 中的索引
-   * @param {ColumnConfig} column 列配置
+   * @param {ColumnInfo} column 列配置
    */
   getColumnIndex (column) {
     return this.fullColumnMap.has(column) ? this.fullColumnMap.get(column).index : -1
   },
   /**
    * 根据 column 获取相对于当前表格列中的索引
-   * @param {ColumnConfig} column 列配置
+   * @param {ColumnInfo} column 列配置
    */
   _getColumnIndex (column) {
     return this.visibleColumn.indexOf(column)
   },
   /**
    * 根据 column 获取渲染中的虚拟索引
-   * @param {ColumnConfig} column 列配置
+   * @param {ColumnInfo} column 列配置
    */
   $getColumnIndex (column) {
     return this.tableColumn.indexOf(column)
   },
   /**
    * 判断是否为索引列
-   * @param {ColumnConfig} column 列配置
+   * @param {ColumnInfo} column 列配置
    */
   isSeqColumn (column) {
     return column && column.type === 'seq'
@@ -756,11 +951,10 @@ const Methods = {
     }
   },
   /**
-   * 默认行为只允许执行一次
+   * 默认行为只允许执行一次，除非被重置
    */
   handleDefaults () {
-    const checkboxConfig = this.checkboxConfig
-    if (checkboxConfig) {
+    if (this.checkboxConfig) {
       this.handleDefaultSelectionChecked()
     }
     if (this.radioConfig) {
@@ -775,11 +969,17 @@ const Methods = {
     if (this.treeConfig) {
       this.handleDefaultTreeExpand()
     }
+    if (this.mergeCells) {
+      this.handleDefaultMergeCells()
+    }
+    if (this.mergeFooterItems) {
+      this.handleDefaultMergeFooterItems()
+    }
     this.$nextTick(() => setTimeout(this.recalculate))
   },
   /**
    * 隐藏指定列
-   * @param {ColumnConfig} column 列配置
+   * @param {ColumnInfo} column 列配置
    */
   hideColumn (column) {
     column.visible = false
@@ -787,7 +987,7 @@ const Methods = {
   },
   /**
    * 显示指定列
-   * @param {ColumnConfig} column 列配置
+   * @param {ColumnInfo} column 列配置
    */
   showColumn (column) {
     column.visible = true
@@ -1006,8 +1206,7 @@ const Methods = {
       })
     }
     const visibleColumn = leftList.concat(centerList).concat(rightList)
-    let tableColumn = visibleColumn
-    let scrollXLoad = sXOpts.gt > -1 && sXOpts.gt < tableFullColumn.length
+    let scrollXLoad = sXOpts.gt > -1 && sXOpts.gt <= tableFullColumn.length
     Object.assign(columnStore, { leftList, centerList, rightList })
     if (scrollXLoad && isGroup) {
       scrollXLoad = false
@@ -1026,25 +1225,33 @@ const Methods = {
       if (this.footerSpanMethod) {
         UtilTools.warn('vxe.error.scrollErrProp', ['footer-span-method'])
       }
-      Object.assign(scrollXStore, {
-        startIndex: 0,
-        visibleIndex: 0
-      })
-      tableColumn = visibleColumn.slice(scrollXStore.startIndex, scrollXStore.startIndex + scrollXStore.renderSize)
+      const { visibleSize } = computeVirtualX(this)
+      scrollXStore.startIndex = 0
+      scrollXStore.endIndex = visibleSize
+      scrollXStore.visibleSize = visibleSize
+    }
+    // 如果列被显示/隐藏，则清除合并状态
+    // 如果列被设置为固定，则清除合并状态
+    if (visibleColumn.length !== this.visibleColumn.length || !this.visibleColumn.every((column, index) => column === visibleColumn[index])) {
+      this.clearMergeCells()
+      this.clearMergeFooterItems()
     }
     this.scrollXLoad = scrollXLoad
-    this.tableColumn = tableColumn
     this.visibleColumn = visibleColumn
+    this.handleTableColumn()
     return this.$nextTick().then(() => {
       this.updateFooter()
-      this.recalculate(true)
+      return this.recalculate(true)
+    }).then(() => {
+      this.updateCellAreas()
     })
   },
   /**
    * 指定列宽的列进行拆分
    */
   analyColumnWidth () {
-    const { columnWidth, columnMinWidth } = this
+    const { columnOpts } = this
+    const { width: defaultWidth, minWidth: defaultMinWidth } = columnOpts
     const resizeList = []
     const pxList = []
     const pxMinList = []
@@ -1052,11 +1259,11 @@ const Methods = {
     const scaleMinList = []
     const autoList = []
     this.tableFullColumn.forEach(column => {
-      if (columnWidth && !column.width) {
-        column.width = columnWidth
+      if (defaultWidth && !column.width) {
+        column.width = defaultWidth
       }
-      if (columnMinWidth && !column.minWidth) {
-        column.minWidth = columnMinWidth
+      if (defaultMinWidth && !column.minWidth) {
+        column.minWidth = defaultMinWidth
       }
       if (column.visible) {
         if (column.resizeWidth) {
@@ -1223,6 +1430,8 @@ const Methods = {
       this.scrollbarHeight = Math.max(tableHeight - bodyElem.clientHeight, 0)
       this.overflowX = tableWidth > bodyWidth
     }
+    this.customHeight = calcHeight(this, 'height')
+    this.customMaxHeight = calcHeight(this, 'maxHeight')
     this.parentHeight = Math.max(this.headerHeight + this.footerHeight + 20, this.getParentHeight())
     if (this.overflowX) {
       this.checkScrolling()
@@ -1552,6 +1761,12 @@ const Methods = {
     } else if (mouseConfig) {
       if (!getEventTargetNode(evnt, $el).flag && !getEventTargetNode(evnt, $refs.tableWrapper).flag) {
         this.clearSelected()
+        if (!getEventTargetNode(evnt, document.body, 'vxe-table--ignore-areas-clear').flag) {
+          this.preventEvent(evnt, 'event.clearAreas', {}, () => {
+            this.clearCellAreas()
+            this.clearCopyCellArea()
+          })
+        }
       }
     }
     // 如果配置了快捷菜单且，点击了其他地方则关闭
@@ -1602,7 +1817,25 @@ const Methods = {
         const operArrow = isLeftArrow || isUpArrow || isRightArrow || isDwArrow
         const operCtxMenu = isCtxMenu && ctxMenuStore.visible && (isEnter || isSpacebar || operArrow)
         let params
-        if (isEsc) {
+        if (operCtxMenu) {
+          // 如果配置了右键菜单; 支持方向键操作、回车
+          evnt.preventDefault()
+          if (ctxMenuStore.showChild && hasChildrenList(ctxMenuStore.selected)) {
+            this.moveCtxMenu(evnt, keyCode, ctxMenuStore, 'selectChild', 37, false, ctxMenuStore.selected.children)
+          } else {
+            this.moveCtxMenu(evnt, keyCode, ctxMenuStore, 'selected', 39, true, this.ctxMenuList)
+          }
+        } else if (keyboardConfig && this.mouseConfig && this.mouseOpts.area && this.handleKeyboardEvent) {
+          this.handleKeyboardEvent(evnt)
+        } else if (isSpacebar && (keyboardConfig.isArrow || keyboardConfig.isTab) && selected.row && selected.column && (selected.column.type === 'checkbox' || selected.column.type === 'radio')) {
+          // 空格键支持选中复选框
+          evnt.preventDefault()
+          if (selected.column.type === 'checkbox') {
+            this.handleToggleCheckRowEvent(evnt, selected.args)
+          } else {
+            this.triggerRadioRowEvent(evnt, selected.args)
+          }
+        } else if (isEsc) {
           // 如果按下了 Esc 键，关闭快捷菜单、筛选
           this.closeMenu()
           this.closeFilter()
@@ -1615,13 +1848,11 @@ const Methods = {
               this.$nextTick(() => this.handleSelected(params, evnt))
             }
           }
-        } else if (isSpacebar && (keyboardConfig.isArrow || keyboardConfig.isTab) && selected.row && selected.column && (selected.column.type === 'checkbox' || selected.column.type === 'radio')) {
-          // 空格键支持选中复选框
-          evnt.preventDefault()
-          if (selected.column.type === 'checkbox') {
-            this.handleToggleCheckRowEvent(selected.args, evnt)
-          } else {
-            this.triggerRadioRowEvent(evnt, selected.args)
+        } else if (isF2) {
+          // 如果按下了 F2 键
+          if (selected.row && selected.column) {
+            evnt.preventDefault()
+            this.handleActived(selected.args, evnt)
           }
         } else if (isEnter && !isAltKey && keyboardConfig.isEnter && (selected.row || actived.row || (treeConfig && highlightCurrentRow && currentRow))) {
           // 退出选中
@@ -1655,20 +1886,6 @@ const Methods = {
                   .then(() => this.triggerCurrentRowEvent(evnt, params))
               }
             }
-          }
-        } else if (operCtxMenu) {
-          // 如果配置了右键菜单; 支持方向键操作、回车
-          evnt.preventDefault()
-          if (ctxMenuStore.showChild && hasChildrenList(ctxMenuStore.selected)) {
-            this.moveCtxMenu(evnt, keyCode, ctxMenuStore, 'selectChild', 37, false, ctxMenuStore.selected.children)
-          } else {
-            this.moveCtxMenu(evnt, keyCode, ctxMenuStore, 'selected', 39, true, this.ctxMenuList)
-          }
-        } else if (isF2) {
-          // 如果按下了 F2 键
-          if (selected.row && selected.column) {
-            evnt.preventDefault()
-            this.handleActived(selected.args, evnt)
           }
         } else if (operArrow && keyboardConfig.isArrow) {
           // 如果按下了方向键
@@ -1720,6 +1937,30 @@ const Methods = {
         }
         this.emitEvent('keydown', {}, evnt)
       })
+    }
+  },
+  handleGlobalPasteEvent (evnt) {
+    const { isActivated, keyboardConfig, mouseConfig, mouseOpts } = this
+    if (isActivated) {
+      if (keyboardConfig && keyboardConfig.isClip && mouseConfig && mouseOpts.area && this.handlePasteCellAreaEvent) {
+        this.handlePasteCellAreaEvent(evnt)
+      }
+    }
+  },
+  handleGlobalCopyEvent (evnt) {
+    const { isActivated, keyboardConfig, mouseConfig, mouseOpts } = this
+    if (isActivated) {
+      if (keyboardConfig && keyboardConfig.isClip && mouseConfig && mouseOpts.area && this.handleCopyCellAreaEvent) {
+        this.handleCopyCellAreaEvent(evnt)
+      }
+    }
+  },
+  handleGlobalCutEvent (evnt) {
+    const { isActivated, keyboardConfig, mouseConfig, mouseOpts } = this
+    if (isActivated) {
+      if (keyboardConfig && keyboardConfig.isClip && mouseConfig && mouseOpts.area && this.handleCutCellAreaEvent) {
+        this.handleCutCellAreaEvent(evnt)
+      }
     }
   },
   handleGlobalResizeEvent () {
@@ -1775,25 +2016,13 @@ const Methods = {
     const titleElem = evnt.currentTarget
     this.handleTargetEnterEvent()
     if (tooltipStore.column !== column || !tooltipStore.visible) {
-      this.handleTooltip(evnt, titleElem, titleElem, params)
+      this.handleTooltip(evnt, titleElem, titleElem, null, params)
     }
   },
   /**
-   * 触发表尾 tooltip 事件
+   * 触发单元格 tooltip 事件
    */
-  triggerFooterTooltipEvent (evnt, params) {
-    const { column } = params
-    const { tooltipStore } = this
-    const cell = evnt.currentTarget
-    this.handleTargetEnterEvent()
-    if (tooltipStore.column !== column || !tooltipStore.visible) {
-      this.handleTooltip(evnt, cell, cell.children[0], params)
-    }
-  },
-  /**
-   * 触发 tooltip 事件
-   */
-  triggerTooltipEvent (evnt, params) {
+  triggerBodyTooltipEvent (evnt, params) {
     const { editConfig, editOpts, editStore, tooltipStore } = this
     const { actived } = editStore
     const { row, column } = params
@@ -1805,16 +2034,38 @@ const Methods = {
       }
     }
     if (tooltipStore.column !== column || tooltipStore.row !== row || !tooltipStore.visible) {
-      this.handleTooltip(evnt, cell, column.treeNode ? cell.querySelector('.vxe-tree-cell') : cell.children[0], params)
+      let overflowElem
+      let tipElem
+      if (column.treeNode) {
+        overflowElem = cell.querySelector('.vxe-tree-cell')
+        if (column.type === 'html') {
+          tipElem = cell.querySelector('.vxe-cell--html')
+        }
+      } else {
+        tipElem = cell.querySelector(column.type === 'html' ? '.vxe-cell--html' : '.vxe-cell--label')
+      }
+      this.handleTooltip(evnt, cell, overflowElem || cell.children[0], tipElem, params)
+    }
+  },
+  /**
+   * 触发表尾 tooltip 事件
+   */
+  triggerFooterTooltipEvent (evnt, params) {
+    const { column } = params
+    const { tooltipStore } = this
+    const cell = evnt.currentTarget
+    this.handleTargetEnterEvent()
+    if (tooltipStore.column !== column || !tooltipStore.visible) {
+      this.handleTooltip(evnt, cell, cell.querySelector('.vxe-cell--item') || cell.children[0], null, params)
     }
   },
   /**
    * 处理显示 tooltip
    * @param {Event} evnt 事件
-   * @param {ColumnConfig} column 列配置
+   * @param {ColumnInfo} column 列配置
    * @param {Row} row 行对象
    */
-  handleTooltip (evnt, cell, overflowElem, params) {
+  handleTooltip (evnt, cell, overflowElem, tipElem, params) {
     params.cell = cell
     const { $refs, tooltipOpts, tooltipStore } = this
     const { column, row } = params
@@ -1823,14 +2074,15 @@ const Methods = {
     const customContent = contentMethod ? contentMethod(params) : null
     const useCustom = contentMethod && !XEUtils.eqNull(customContent)
     const content = useCustom ? customContent : (column.type === 'html' ? overflowElem.innerText : overflowElem.textContent).trim()
-    if (content && (enabled || useCustom || overflowElem.scrollWidth > overflowElem.clientWidth)) {
+    const isCellOverflow = overflowElem.scrollWidth > overflowElem.clientWidth
+    if (content && (enabled || useCustom || isCellOverflow)) {
       Object.assign(tooltipStore, {
         row,
         column,
         visible: true
       })
       if (tooltip) {
-        tooltip.toVisible(overflowElem, UtilTools.formatText(content))
+        tooltip.toVisible(isCellOverflow ? overflowElem : (tipElem || overflowElem), UtilTools.formatText(content))
       }
     }
     return this.$nextTick()
@@ -1839,15 +2091,18 @@ const Methods = {
    * 关闭 tooltip
    */
   clostTooltip () {
-    const tooltip = this.$refs.tooltip
-    Object.assign(this.tooltipStore, {
-      row: null,
-      column: null,
-      content: null,
-      visible: false
-    })
-    if (tooltip) {
-      tooltip.close()
+    const { $refs, tooltipStore } = this
+    const tooltip = $refs.tooltip
+    if (tooltipStore.visible) {
+      Object.assign(tooltipStore, {
+        row: null,
+        column: null,
+        content: null,
+        visible: false
+      })
+      if (tooltip) {
+        tooltip.close()
+      }
     }
     return this.$nextTick()
   },
@@ -2004,7 +2259,7 @@ const Methods = {
     }
     this.checkSelectionStatus()
   },
-  handleToggleCheckRowEvent (params, evnt) {
+  handleToggleCheckRowEvent (evnt, params) {
     const { selection, checkboxOpts } = this
     const { checkField: property } = checkboxOpts
     const { row } = params
@@ -2026,7 +2281,7 @@ const Methods = {
    * 多选，切换某一行的选中状态
    */
   toggleCheckboxRow (row) {
-    this.handleToggleCheckRowEvent({ row })
+    this.handleToggleCheckRowEvent(null, { row })
     return this.$nextTick()
   },
   /**
@@ -2420,7 +2675,7 @@ const Methods = {
   },
   /**
    * 用于当前列，设置某列行为高亮状态
-   * @param {ColumnConfig} column 列配置
+   * @param {ColumnInfo} column 列配置
    */
   setCurrentColumn (column) {
     this.clearCurrentRow()
@@ -2496,7 +2751,7 @@ const Methods = {
         }
         // 如果是复选框
         if (!triggerCheckbox && (checkboxOpts.trigger === 'row' || (isCheckboxType && checkboxOpts.trigger === 'cell'))) {
-          this.handleToggleCheckRowEvent(params, evnt)
+          this.handleToggleCheckRowEvent(evnt, params)
         }
       }
       // 如果设置了单元格选中功能，则不会使用点击事件去处理（只能支持双击模式）
@@ -2630,7 +2885,7 @@ const Methods = {
   isFilter (field) {
     if (field) {
       const column = this.getColumnByField(field)
-      return column.filters && column.filters.some(option => option.checked)
+      return column && column.filters && column.filters.some(option => option.checked)
     }
     return this.visibleColumn.some(column => column.filters && column.filters.some(option => option.checked))
   },
@@ -3053,43 +3308,22 @@ const Methods = {
   triggerScrollXEvent () {
     this.loadScrollXData()
   },
-  loadScrollXData (force) {
-    const { $refs, visibleColumn, scrollXStore } = this
-    const { startIndex, renderSize, offsetSize, visibleSize } = scrollXStore
-    const scrollBodyElem = $refs.tableBody.$el
-    const scrollLeft = scrollBodyElem.scrollLeft
-    let toVisibleIndex = 0
-    let width = 0
-    let preload = force || false
-    const colLen = visibleColumn.length
-    for (let colIndex = 0; colIndex < colLen; colIndex++) {
-      width += visibleColumn[colIndex].renderWidth
-      if (scrollLeft < width) {
-        toVisibleIndex = colIndex
-        break
+  loadScrollXData () {
+    const { mergeList, mergeFooterList, scrollXStore } = this
+    const { startIndex, endIndex, offsetSize } = scrollXStore
+    const { toVisibleIndex, visibleSize } = computeVirtualX(this)
+    if (toVisibleIndex <= startIndex || toVisibleIndex >= endIndex - visibleSize - 1) {
+      const offsetItem = {
+        startIndex: Math.max(0, toVisibleIndex - 1 - offsetSize),
+        endIndex: toVisibleIndex + visibleSize + offsetSize
       }
-    }
-    if (force || scrollXStore.visibleIndex !== toVisibleIndex) {
-      const marginSize = Math.min(Math.floor((renderSize - visibleSize) / 2), visibleSize)
-      if (scrollXStore.visibleIndex === toVisibleIndex) {
-        scrollXStore.startIndex = toVisibleIndex
-      } else if (scrollXStore.visibleIndex > toVisibleIndex) {
-        // 向左
-        preload = toVisibleIndex - offsetSize <= startIndex
-        if (preload) {
-          scrollXStore.startIndex = Math.max(0, Math.max(0, toVisibleIndex - marginSize))
-        }
-      } else {
-        // 向右
-        preload = toVisibleIndex + visibleSize + offsetSize >= startIndex + renderSize
-        if (preload) {
-          scrollXStore.startIndex = Math.max(0, Math.min(visibleColumn.length - renderSize, toVisibleIndex - marginSize))
-        }
-      }
-      if (preload) {
+      handleMergerXOffserIndex(mergeList.concat(mergeFooterList), offsetItem)
+      const { startIndex: offsetStartIndex, endIndex: offsetEndIndex } = offsetItem
+      scrollXStore.startIndex = offsetStartIndex
+      scrollXStore.endIndex = offsetEndIndex
+      if (startIndex !== offsetStartIndex || endIndex !== offsetEndIndex) {
         this.updateScrollXData()
       }
-      scrollXStore.visibleIndex = toVisibleIndex
     }
     this.clostTooltip()
   },
@@ -3111,162 +3345,93 @@ const Methods = {
    * 纵向 Y 可视渲染处理
    */
   loadScrollYData (evnt) {
-    const { afterFullData, scrollYStore, isLoadData } = this
-    const { startIndex, renderSize, offsetSize, visibleSize, rowHeight } = scrollYStore
+    const { mergeList, scrollYStore } = this
+    const { startIndex, endIndex, visibleSize, offsetSize, rowHeight } = scrollYStore
     const scrollBodyElem = evnt.target
     const scrollTop = scrollBodyElem.scrollTop
-    const toVisibleIndex = Math.ceil(scrollTop / rowHeight)
-    let preload = false
-    if (isLoadData || scrollYStore.visibleIndex !== toVisibleIndex) {
-      const marginSize = Math.min(Math.floor((renderSize - visibleSize) / 2), visibleSize)
-      if (scrollYStore.visibleIndex > toVisibleIndex) {
-        // 向上
-        preload = toVisibleIndex - offsetSize <= startIndex
-        if (preload) {
-          scrollYStore.startIndex = Math.max(0, toVisibleIndex - Math.max(marginSize, renderSize - visibleSize))
-        }
-      } else {
-        // 向下
-        preload = toVisibleIndex + visibleSize + offsetSize >= startIndex + renderSize
-        if (preload) {
-          scrollYStore.startIndex = Math.max(0, Math.min(afterFullData.length - renderSize, toVisibleIndex - marginSize))
-        }
+    const toVisibleIndex = Math.floor(scrollTop / rowHeight)
+    if (toVisibleIndex <= startIndex || toVisibleIndex >= endIndex - visibleSize - 1) {
+      const offsetItem = {
+        startIndex: Math.max(0, toVisibleIndex - 1 - offsetSize),
+        endIndex: toVisibleIndex + visibleSize + offsetSize
       }
-      if (preload) {
+      handleMergerYOffserIndex(mergeList, offsetItem)
+      const { startIndex: offsetStartIndex, endIndex: offsetEndIndex } = offsetItem
+      scrollYStore.startIndex = offsetStartIndex
+      scrollYStore.endIndex = offsetEndIndex
+      if (startIndex !== offsetStartIndex || endIndex !== offsetEndIndex) {
         this.updateScrollYData()
       }
-      scrollYStore.visibleIndex = toVisibleIndex
-      this.isLoadData = false
     }
-  },
-  computeRowHeight () {
-    const tableBody = this.$refs.tableBody
-    const tableBodyElem = tableBody ? tableBody.$el : null
-    const tableHeader = this.$refs.tableHeader
-    let rowHeight
-    if (tableBodyElem) {
-      let firstTrElem = tableBodyElem.querySelector('tbody>tr')
-      if (!firstTrElem && tableHeader) {
-        firstTrElem = tableHeader.$el.querySelector('thead>tr')
-      }
-      if (firstTrElem) {
-        rowHeight = firstTrElem.clientHeight
-      }
-    }
-    // 默认的行高
-    if (!rowHeight) {
-      rowHeight = this.rowHeightMaps[this.vSize || 'default']
-    }
-    this.rowHeight = rowHeight
   },
   // 计算可视渲染相关数据
   computeScrollLoad () {
     return this.$nextTick().then(() => {
-      const { vSize, scrollXLoad, scrollYLoad, sXOpts, scrollYStore, sYOpts, scrollXStore, visibleColumn, rowHeightMaps } = this
-      const tableBody = this.$refs.tableBody
-      const tableBodyElem = tableBody ? tableBody.$el : null
-      const tableHeader = this.$refs.tableHeader
-      if (tableBodyElem) {
-        // 计算 X 逻辑
-        if (scrollXLoad) {
-          const bodyWidth = tableBodyElem.clientWidth
-          let visibleXSize = XEUtils.toNumber(sXOpts.vSize)
-          if (!sXOpts.vSize) {
-            const len = visibleXSize = visibleColumn.length
-            let countWidth = 0
-            let column
-            for (let colIndex = 0; colIndex < len; colIndex++) {
-              column = visibleColumn[colIndex]
-              countWidth += column.renderWidth
-              if (countWidth > bodyWidth) {
-                visibleXSize = colIndex + 1
-                break
-              }
-            }
-          }
-          scrollXStore.visibleSize = visibleXSize
-          // 自动优化
-          if (!sXOpts.oSize) {
-            scrollXStore.offsetSize = visibleXSize
-          }
-          if (!sXOpts.rSize) {
-            scrollXStore.renderSize = Math.max(8, visibleXSize + 6)
-          }
-          this.updateScrollXData()
-        } else {
-          this.updateScrollXSpace()
-        }
-        // 计算 Y 逻辑
-        if (scrollYLoad) {
-          let rHeight
-          if (sYOpts.rHeight) {
-            rHeight = sYOpts.rHeight
-          } else {
-            let firstTrElem = tableBodyElem.querySelector('tbody>tr')
-            if (!firstTrElem && tableHeader) {
-              firstTrElem = tableHeader.$el.querySelector('thead>tr')
-            }
-            if (firstTrElem) {
-              rHeight = firstTrElem.clientHeight
-            }
-          }
-          // 默认的行高
-          if (!rHeight) {
-            rHeight = rowHeightMaps[vSize || 'default']
-          }
-          const visibleYSize = XEUtils.toNumber(sYOpts.vSize || Math.ceil(tableBodyElem.clientHeight / rHeight))
-          scrollYStore.visibleSize = visibleYSize
-          scrollYStore.rowHeight = rHeight
-          // 自动优化
-          if (!sYOpts.oSize) {
-            scrollYStore.offsetSize = visibleYSize
-          }
-          if (!sYOpts.rSize) {
-            scrollYStore.renderSize = Math.max(6, browse.edge ? visibleYSize * 10 : (isWebkit ? visibleYSize + 2 : visibleYSize * 6))
-          }
-          this.updateScrollYData()
-        } else {
-          this.updateScrollYSpace()
-        }
+      const { sYOpts, sXOpts, scrollXLoad, scrollYLoad, scrollXStore, scrollYStore } = this
+      // 计算 X 逻辑
+      if (scrollXLoad) {
+        scrollXStore.offsetSize = sXOpts.oSize ? XEUtils.toNumber(sXOpts.oSize) : browse.msie ? 10 : (browse.edge ? 5 : 0)
+        this.updateScrollXData()
+      } else {
+        this.updateScrollXSpace()
       }
+      // 计算 Y 逻辑
+      const { rowHeight, visibleSize } = computeVirtualY(this)
+      if (scrollYLoad) {
+        scrollYStore.offsetSize = sYOpts.oSize ? XEUtils.toNumber(sYOpts.oSize) : browse.msie ? 20 : (browse.edge ? 10 : 0)
+        scrollYStore.visibleSize = visibleSize
+        scrollYStore.rowHeight = rowHeight
+        this.updateScrollYData()
+      } else {
+        this.updateScrollYSpace()
+      }
+      this.rowHeight = rowHeight
       this.$nextTick(this.updateStyle)
     })
   },
+  handleTableColumn () {
+    const { scrollXLoad, visibleColumn, scrollXStore } = this
+    this.tableColumn = scrollXLoad ? visibleColumn.slice(scrollXStore.startIndex, scrollXStore.endIndex) : visibleColumn.slice(0)
+  },
   updateScrollXData () {
-    const { visibleColumn, scrollXStore } = this
-    this.tableColumn = visibleColumn.slice(scrollXStore.startIndex, scrollXStore.startIndex + scrollXStore.renderSize)
+    this.handleTableColumn()
     this.updateScrollXSpace()
   },
   // 更新横向 X 可视渲染上下剩余空间大小
   updateScrollXSpace () {
     const { $refs, elemStore, visibleColumn, scrollXStore, scrollXLoad, tableWidth, scrollbarWidth } = this
     const { tableHeader, tableBody, tableFooter } = $refs
-    const headerElem = tableHeader ? tableHeader.$el.querySelector('.vxe-table--header') : null
-    const bodyElem = tableBody.$el.querySelector('.vxe-table--body')
-    const footerElem = tableFooter ? tableFooter.$el.querySelector('.vxe-table--footer') : null
-    const leftSpaceWidth = visibleColumn.slice(0, scrollXStore.startIndex).reduce((previous, column) => previous + column.renderWidth, 0)
-    let marginLeft = ''
-    if (scrollXLoad) {
-      marginLeft = `${leftSpaceWidth}px`
-    }
-    if (headerElem) {
-      headerElem.style.marginLeft = marginLeft
-    }
-    bodyElem.style.marginLeft = marginLeft
-    if (footerElem) {
-      footerElem.style.marginLeft = marginLeft
-    }
-    const containerList = ['main']
-    containerList.forEach(name => {
-      const layoutList = ['header', 'body', 'footer']
-      layoutList.forEach(layout => {
-        const xSpaceElem = elemStore[`${name}-${layout}-xSpace`]
-        if (xSpaceElem) {
-          xSpaceElem.style.width = scrollXLoad ? `${tableWidth + (layout === 'header' ? scrollbarWidth : 0)}px` : ''
-        }
+    const tableBodyElem = tableBody ? tableBody.$el : null
+    if (tableBodyElem) {
+      const tableHeaderElem = tableHeader ? tableHeader.$el : null
+      const tableFooterElem = tableFooter ? tableFooter.$el : null
+      const headerElem = tableHeaderElem ? tableHeaderElem.querySelector('.vxe-table--header') : null
+      const bodyElem = tableBodyElem.querySelector('.vxe-table--body')
+      const footerElem = tableFooterElem ? tableFooterElem.querySelector('.vxe-table--footer') : null
+      const leftSpaceWidth = visibleColumn.slice(0, scrollXStore.startIndex).reduce((previous, column) => previous + column.renderWidth, 0)
+      let marginLeft = ''
+      if (scrollXLoad) {
+        marginLeft = `${leftSpaceWidth}px`
+      }
+      if (headerElem) {
+        headerElem.style.marginLeft = marginLeft
+      }
+      bodyElem.style.marginLeft = marginLeft
+      if (footerElem) {
+        footerElem.style.marginLeft = marginLeft
+      }
+      const containerList = ['main']
+      containerList.forEach(name => {
+        const layoutList = ['header', 'body', 'footer']
+        layoutList.forEach(layout => {
+          const xSpaceElem = elemStore[`${name}-${layout}-xSpace`]
+          if (xSpaceElem) {
+            xSpaceElem.style.width = scrollXLoad ? `${tableWidth + (layout === 'header' ? scrollbarWidth : 0)}px` : ''
+          }
+        })
       })
-    })
-    this.$nextTick(this.updateStyle)
+      this.$nextTick(this.updateStyle)
+    }
   },
   updateScrollYData () {
     this.handleTableData()
@@ -3275,8 +3440,9 @@ const Methods = {
   // 更新纵向 Y 可视渲染上下剩余空间大小
   updateScrollYSpace () {
     const { elemStore, scrollYStore, scrollYLoad, afterFullData } = this
-    const bodyHeight = afterFullData.length * scrollYStore.rowHeight
-    const topSpaceHeight = Math.max(scrollYStore.startIndex * scrollYStore.rowHeight, 0)
+    const { startIndex, rowHeight } = scrollYStore
+    const bodyHeight = afterFullData.length * rowHeight
+    const topSpaceHeight = Math.max(0, startIndex * rowHeight)
     const containerList = ['main', 'left', 'right']
     let marginTop = ''
     let ySpaceHeight = ''
@@ -3306,30 +3472,17 @@ const Methods = {
    */
   scrollTo (scrollLeft, scrollTop) {
     const { $refs } = this
-    const bodyElem = $refs.tableBody.$el
-    let istriggerBody
+    const { tableBody, rightBody, tableFooter } = $refs
+    const tableBodyElem = tableBody ? tableBody.$el : null
+    const rightBodyElem = rightBody ? rightBody.$el : null
+    const bodyTargetElem = rightBodyElem || tableBodyElem
+    const tableFooterElem = tableFooter ? tableFooter.$el : null
+    const footerTargetElem = tableFooterElem || tableBodyElem
     if (XEUtils.isNumber(scrollLeft)) {
-      const footerElem = $refs.tableFooter ? $refs.tableFooter.$el : null
-      if (footerElem) {
-        footerElem.scrollLeft = scrollLeft
-        triggerEvent(footerElem, 'scroll')
-      } else {
-        istriggerBody = true
-        bodyElem.scrollLeft = scrollLeft
-      }
+      footerTargetElem.scrollLeft = scrollLeft
     }
     if (XEUtils.isNumber(scrollTop)) {
-      const rightBodyElem = $refs.rightBody ? $refs.rightBody.$el : null
-      if (rightBodyElem) {
-        rightBodyElem.scrollTop = scrollTop
-        triggerEvent(rightBodyElem, 'scroll')
-      } else {
-        istriggerBody = true
-        bodyElem.scrollTop = scrollTop
-      }
-    }
-    if (istriggerBody) {
-      triggerEvent(bodyElem, 'scroll')
+      bodyTargetElem.scrollTop = scrollTop
     }
     if (this.scrollXLoad || this.scrollYLoad) {
       return new Promise(resolve => setTimeout(() => resolve(this.$nextTick()), 50))
@@ -3339,7 +3492,7 @@ const Methods = {
   /**
    * 如果有滚动条，则滚动到对应的行
    * @param {Row} row 行对象
-   * @param {ColumnConfig} column 列配置
+   * @param {ColumnInfo} column 列配置
    */
   scrollToRow (row, column) {
     const rest = []
@@ -3355,7 +3508,7 @@ const Methods = {
   },
   /**
    * 如果有滚动条，则滚动到对应的列
-   * @param {ColumnConfig} column 列配置
+   * @param {ColumnInfo} column 列配置
    */
   scrollToColumn (column) {
     if (column && this.fullColumnMap.has(column)) {
@@ -3387,14 +3540,15 @@ const Methods = {
    * 手动清除滚动相关信息，还原到初始状态
    */
   clearScroll () {
-    const $refs = this.$refs
-    const tableBody = $refs.tableBody
+    const { $refs } = this
+    const { tableBody, rightBody, tableFooter } = $refs
     const tableBodyElem = tableBody ? tableBody.$el : null
-    const tableFooter = $refs.tableFooter
+    const rightBodyElem = rightBody ? rightBody.$el : null
+    const bodyTargetElem = rightBodyElem || tableBodyElem
     const tableFooterElem = tableFooter ? tableFooter.$el : null
     const footerTargetElem = tableFooterElem || tableBodyElem
-    if (tableBodyElem) {
-      tableBodyElem.scrollTop = 0
+    if (bodyTargetElem) {
+      bodyTargetElem.scrollTop = 0
     }
     if (footerTargetElem) {
       footerTargetElem.scrollLeft = 0
@@ -3407,7 +3561,7 @@ const Methods = {
   updateFooter () {
     const { showFooter, visibleColumn, footerMethod } = this
     if (showFooter && footerMethod) {
-      this.footerData = visibleColumn.length ? footerMethod({ columns: visibleColumn, data: this.afterFullData }) : []
+      this.footerData = visibleColumn.length ? footerMethod({ columns: visibleColumn, data: this.afterFullData, $table: this, $grid: this.$xegrid }) : []
     }
     return this.$nextTick()
   },
@@ -3419,13 +3573,12 @@ const Methods = {
   updateStatus (scope, cellValue) {
     const customVal = !XEUtils.isUndefined(cellValue)
     return this.$nextTick().then(() => {
-      const { $refs, tableData, editRules, validStore } = this
+      const { $refs, editRules, validStore } = this
       if (scope && $refs.tableBody && editRules) {
         const { row, column } = scope
         const type = 'change'
         if (this.hasCellRules(type, row, column)) {
-          const rowIndex = tableData.indexOf(row)
-          const cell = DomTools.getCell(this, { row, rowIndex, column })
+          const cell = this.getCell(column, row)
           if (cell) {
             return this.validCellRules(type, row, column, cellValue)
               .then(() => {
@@ -3445,11 +3598,78 @@ const Methods = {
       }
     })
   },
+  handleDefaultMergeCells () {
+    this.setMergeCells(this.mergeCells)
+  },
+  /**
+   * 设置合并单元格
+   * @param {MergeOptions[]} merges { row: Row|number, column: ColumnInfo|number, rowspan: number, colspan: number }
+   */
+  setMergeCells (merges) {
+    setMerges(this, merges, this.mergeList, this.afterFullData)
+    return this.$nextTick().then(() => this.updateCellAreas())
+  },
+  /**
+   * 移除单元格合并
+   * @param {MergeOptions[]} merges 多个或数组 [{row:Row|number, col:ColumnInfo|number}]
+   */
+  removeMergeCells (merges) {
+    const rest = removeMerges(this, merges, this.mergeList, this.afterFullData)
+    return this.$nextTick().then(() => {
+      this.updateCellAreas()
+      return rest
+    })
+  },
+  /**
+   * 获取所有被合并的单元格
+   */
+  getMergeCells () {
+    return this.mergeList.slice(0)
+  },
+  /**
+   * 清除所有单元格合并
+   */
+  clearMergeCells () {
+    this.mergeList = []
+    return this.$nextTick()
+  },
+  handleDefaultMergeFooterItems () {
+    this.setMergeFooterItems(this.mergeFooterItems)
+  },
+  setMergeFooterItems (merges) {
+    setMerges(this, merges, this.mergeFooterList, null)
+    return this.$nextTick().then(() => this.updateCellAreas())
+  },
+  removeMergeFooterItems (merges) {
+    const rest = removeMerges(this, merges, this.mergeFooterList, null)
+    return this.$nextTick().then(() => {
+      this.updateCellAreas()
+      return rest
+    })
+  },
+  /**
+   * 获取所有被合并的表尾
+   */
+  getMergeFooterItems () {
+    return this.mergeFooterList.slice(0)
+  },
+  /**
+   * 清除所有表尾合并
+   */
+  clearMergeFooterItems () {
+    this.mergeFooterList = []
+    return this.$nextTick()
+  },
   updateZindex () {
     if (this.zIndex) {
       this.tZindex = this.zIndex
     } else if (this.tZindex < UtilTools.getLastZIndex()) {
       this.tZindex = UtilTools.nextZIndex()
+    }
+  },
+  updateCellAreas () {
+    if (this.mouseConfig && this.mouseOpts.area && this.handleUpdateCellAreas) {
+      this.handleUpdateCellAreas()
     }
   },
   emitEvent (type, params, evnt) {
@@ -3467,6 +3687,15 @@ const Methods = {
   /*************************
    * Publish methods
    *************************/
+  getCell (column, row) {
+    const { $refs } = this
+    const rowid = getRowid(this, row)
+    const bodyElem = $refs[`${column.fixed || 'table'}Body`] || $refs.tableBody
+    if (bodyElem && bodyElem.$el) {
+      return bodyElem.$el.querySelector(`.vxe-body--row[data-rowid="${rowid}"] .${column.id}`)
+    }
+    return null
+  },
   // 与工具栏对接
   connect ($toolbar) {
     if ($toolbar && $toolbar.syncUpdate) {
@@ -3482,7 +3711,7 @@ const Methods = {
 }
 
 // Module methods
-const funcs = 'setFilter,clearFilter,closeMenu,getSelectedCell,clearSelected,insert,insertAt,remove,removeCheckboxRow,removeRadioRow,removeCurrentRow,getRecordset,getInsertRecords,getRemoveRecords,getUpdateRecords,clearActived,getActiveRecord,isActiveByRow,setActiveRow,setActiveCell,setSelectCell,clearValidate,fullValidate,validate,openExport,exportData,openImport,importData,readFile,importByFile,print,openCustom'.split(',')
+const funcs = 'setFilter,clearFilter,closeMenu,setActiveCellArea,getActiveCellArea,getCellAreas,toCellAreaText,clearCellAreas,copyCellArea,cutCellArea,pasteCellArea,getCopyCellArea,clearCopyCellArea,setCellAreas,getSelectedCell,clearSelected,insert,insertAt,remove,removeCheckboxRow,removeRadioRow,removeCurrentRow,getRecordset,getInsertRecords,getRemoveRecords,getUpdateRecords,clearActived,getActiveRecord,isActiveByRow,setActiveRow,setActiveCell,setSelectCell,clearValidate,fullValidate,validate,openExport,exportData,openImport,importData,readFile,importByFile,print,openCustom'.split(',')
 
 funcs.forEach(name => {
   Methods[name] = function (...args) {

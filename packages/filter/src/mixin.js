@@ -6,7 +6,7 @@ export default {
   methods: {
     /**
      * 修改筛选条件列表
-     * @param {ColumnConfig} column 列
+     * @param {ColumnInfo} column 列
      * @param {Array} options 选项
      */
     _setFilter (column, options) {
@@ -15,13 +15,18 @@ export default {
       }
       return this.$nextTick()
     },
+    checkFilterOptions () {
+      const { filterStore } = this
+      filterStore.isAllSelected = filterStore.options.every(item => item._checked)
+      filterStore.isIndeterminate = !filterStore.isAllSelected && filterStore.options.some(item => item._checked)
+    },
     /**
      * 点击筛选事件
      * 当筛选图标被点击时触发
      * 更新选项是否全部状态
      * 打开筛选面板
      * @param {Event} evnt 事件
-     * @param {ColumnConfig} column 列配置
+     * @param {ColumnInfo} column 列配置
      * @param {Object} params 参数
      */
     triggerFilterEvent (evnt, column, params) {
@@ -40,8 +45,11 @@ export default {
           style: null,
           visible: true
         })
-        filterStore.isAllSelected = filterStore.options.every(item => item.checked)
-        filterStore.isIndeterminate = !filterStore.isAllSelected && filterStore.options.some(item => item.checked)
+        // 复原状态
+        filterStore.options.forEach(option => {
+          option._checked = option.checked
+        })
+        this.checkFilterOptions()
         this.hasFilterPanel = true
         this.$nextTick(() => {
           const filterWrapperElem = $refs.filterWrapper.$el
@@ -123,13 +131,17 @@ export default {
         }
       }
       this.closeFilter()
-      this.$nextTick(this.recalculate)
+      this.$nextTick(() => {
+        this.recalculate()
+        this.updateCellAreas()
+      })
     },
     handleClearFilter (column) {
       if (column) {
         const { filters, filterRender } = column
         if (filters) {
           filters.forEach(item => {
+            item._checked = false
             item.checked = false
             item.data = XEUtils.clone(item.resetValue, true)
           })

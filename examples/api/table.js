@@ -260,7 +260,7 @@ const exportDataAPI = [
   },
   {
     name: 'columnFilterMethod',
-    desc: '列过滤方法，该函数 Function(column,$columnIndex) 的返回值用来决定是否过滤掉列',
+    desc: '列过滤方法，该函数 Function({ column, $columnIndex }) 的返回值用来决定是否过滤掉列',
     version: '',
     type: 'Function',
     enum: '',
@@ -269,7 +269,7 @@ const exportDataAPI = [
   },
   {
     name: 'dataFilterMethod',
-    desc: '数据过滤方法，该函数 Function(row,$rowIndex) 的返回值用来决定是否过滤掉数据行',
+    desc: '数据过滤方法，该函数 Function({ row, $rowIndex }) 的返回值用来决定是否过滤掉数据行',
     version: '',
     type: 'Function',
     enum: '',
@@ -278,7 +278,7 @@ const exportDataAPI = [
   },
   {
     name: 'footerFilterMethod',
-    desc: '表尾过滤方法，该函数 Function(cells,$rowIndex) 的返回值用来决定是否过滤掉表尾行',
+    desc: '表尾过滤方法，该函数 Function({ items, $rowIndex }) 的返回值用来决定是否过滤掉表尾行',
     version: '',
     type: 'Function',
     enum: '',
@@ -689,7 +689,26 @@ const apis = [
         list: []
       },
       {
+        name: 'merge-cells',
+        descKey: 'app.api.table.desc.mergeCells',
+        version: '',
+        type: 'Array<{ row: number, col: number, rowspan: number, colspan: number }>',
+        enum: '',
+        defVal: '',
+        list: []
+      },
+      {
+        name: 'merge-footer-items',
+        descKey: 'app.api.table.desc.mergeFooterItems',
+        version: '',
+        type: 'Array<{ row: number, col: number, rowspan: number, colspan: number }>',
+        enum: '',
+        defVal: '',
+        list: []
+      },
+      {
         name: 'span-method',
+        abandoned: true,
         descKey: 'app.api.table.desc.spanMethod',
         version: '',
         type: 'Function',
@@ -699,6 +718,7 @@ const apis = [
       },
       {
         name: 'footer-span-method',
+        abandoned: true,
         descKey: 'app.api.table.desc.footerSpanMethod',
         version: '',
         type: 'Function',
@@ -730,24 +750,6 @@ const apis = [
         version: '',
         type: 'boolean | string',
         enum: 'ellipsis（只显示省略号）,title（并且显示为原生 title）,tooltip（并且显示为 tooltip 提示）',
-        defVal: '',
-        list: []
-      },
-      {
-        name: 'column-width',
-        descKey: 'app.api.table.desc.columnWidth',
-        version: '',
-        type: 'number | string',
-        enum: 'auto, px, %',
-        defVal: '默认均匀分配',
-        list: []
-      },
-      {
-        name: 'column-min-width',
-        descKey: 'app.api.table.desc.columnMinWidth',
-        version: '',
-        type: 'number | string',
-        enum: 'auto, px, %',
         defVal: '',
         list: []
       },
@@ -795,6 +797,34 @@ const apis = [
         enum: '',
         defVal: '继承 setup.table.zIndex',
         list: []
+      },
+      {
+        name: 'column-config',
+        desc: '列的默认参数',
+        version: '',
+        type: 'any',
+        enum: '',
+        defVal: '',
+        list: [
+          {
+            name: 'width',
+            desc: '列的默认宽度',
+            version: '',
+            type: 'Number, String',
+            enum: 'auto, px, %',
+            defVal: '',
+            list: []
+          },
+          {
+            name: 'min-width',
+            desc: '列的默认最小宽度',
+            version: '',
+            type: 'Number, String',
+            enum: 'auto, px, %',
+            defVal: '',
+            list: []
+          }
+        ]
       },
       {
         name: 'seq-config',
@@ -871,7 +901,7 @@ const apis = [
           },
           {
             name: 'sortMethod',
-            desc: '全局排序方法，当触发排序时会调用该函数 Function({ data, column, property, order  }) 返回排序后的列表',
+            desc: '全局排序方法，当触发排序时会调用该函数 Function({ data, column, property, order }) 返回排序后的列表',
             version: '',
             type: 'Function',
             enum: '',
@@ -944,7 +974,7 @@ const apis = [
           },
           {
             name: 'filterMethod',
-            desc: '全局筛选方法，当触发筛选时会调用该函数 Function({value, row, column}) 返回是否有效',
+            desc: '全局筛选方法，当触发筛选时会调用该函数 Function({ value, row, column }) 返回是否有效',
             version: '',
             type: 'Function',
             enum: '',
@@ -1035,7 +1065,7 @@ const apis = [
           },
           {
             name: 'checkRowKey',
-            desc: '默认选中开指定行（只会在初始化时被触发一次，需要有 row-id）',
+            desc: '默认选中指定行（只会在初始化时被触发一次，需要有 row-id）',
             version: '',
             type: 'string',
             enum: '',
@@ -1044,7 +1074,7 @@ const apis = [
           },
           {
             name: 'checkMethod',
-            desc: '是否允许选中的方法，该方法 Function({row}) 的返回值用来决定这一行的 Radio 是否可以选中',
+            desc: '是否允许选中的方法，该方法 Function({ row }) 的返回值用来决定这一行的 Radio 是否可以选中',
             version: '',
             type: 'Function',
             enum: '',
@@ -1117,7 +1147,7 @@ const apis = [
           },
           {
             name: 'checkRowKeys',
-            desc: '默认勾选开指定行（只会在初始化时被触发一次，需要有 row-id）',
+            desc: '默认勾选指定行（只会在初始化时被触发一次，需要有 row-id）',
             version: '',
             type: 'string[]',
             enum: '',
@@ -1144,7 +1174,7 @@ const apis = [
           },
           {
             name: 'checkMethod',
-            desc: '是否允许勾选的方法，该方法 Function({row}) 的返回值用来决定这一行的 checkbox 是否可以勾选',
+            desc: '是否允许勾选的方法，该方法 Function({ row }) 的返回值用来决定这一行的 checkbox 是否可以勾选',
             version: '',
             type: 'Function',
             enum: '',
@@ -1235,7 +1265,7 @@ const apis = [
           },
           {
             name: 'contentMethod',
-            desc: '该方法 Function({items?, row?, rowIndex?, $rowIndex, column, columnIndex, $columnIndex, type, cell, $event}) 接收一个字符串，可以通过返回值来重写默认的提示内容',
+            desc: '该方法 Function({ items?, row?, rowIndex?, $rowIndex, column, columnIndex, $columnIndex, type, cell, $event }) 接收一个字符串，可以通过返回值来重写默认的提示内容',
             version: '',
             type: 'Function',
             enum: '',
@@ -1308,7 +1338,7 @@ const apis = [
           },
           {
             name: 'loadMethod',
-            desc: '该方法 Function({row, row, rowIndex?, $rowIndex?}) 用于异步加载展开后的内容（必须返回 Promise<any[]> 对象）',
+            desc: '该方法 Function({ row, rowIndex?, $rowIndex? }) 用于异步加载展开后的内容（必须返回 Promise<any[]> 对象）',
             version: '',
             type: 'Function',
             enum: '',
@@ -1317,7 +1347,7 @@ const apis = [
           },
           {
             name: 'toggleMethod',
-            desc: '该方法 Function({expanded, column, columnIndex, $columnIndex, row, rowIndex?, $rowIndex?}) 在展开或关闭触发之前调用，可以通过返回值来决定是否允许继续执行',
+            desc: '该方法 Function({ expanded, column, columnIndex, row, rowIndex? }) 在展开或关闭触发之前调用，可以通过返回值来决定是否允许继续执行',
             version: '',
             type: 'Function',
             enum: '',
@@ -1326,7 +1356,7 @@ const apis = [
           },
           {
             name: 'visibleMethod',
-            desc: '该函数 Function({column, columnIndex, $columnIndex, row, rowIndex?, $rowIndex?}) 的返回值用来决定是否允许显示展开按钮',
+            desc: '该函数 Function({ column, columnIndex, row, rowIndex? }) 的返回值用来决定是否允许显示展开按钮',
             version: '',
             type: 'Function',
             enum: '',
@@ -1340,6 +1370,15 @@ const apis = [
             type: 'boolean',
             enum: '',
             defVal: 'false',
+            list: []
+          },
+          {
+            name: 'showIcon',
+            desc: '是否显示图标按钮',
+            version: '',
+            type: 'boolean',
+            enum: '',
+            defVal: 'true',
             list: []
           },
           {
@@ -1462,7 +1501,7 @@ const apis = [
           },
           {
             name: 'loadMethod',
-            desc: '该方法 Function({row}) 用于异步加载子节点（必须返回 Promise<any[]> 对象）',
+            desc: '该方法 Function({ row }) 用于异步加载子节点（必须返回 Promise<any[]> 对象）',
             version: '',
             type: 'Function',
             enum: '',
@@ -1471,7 +1510,7 @@ const apis = [
           },
           {
             name: 'toggleMethod',
-            desc: '该方法 Function({expanded, row, column, columnIndex, $columnIndex}) 在展开或关闭触发之前调用，可以通过返回值来决定是否允许继续执行',
+            desc: '该方法 Function({ expanded, row, column, columnIndex }) 在展开或关闭触发之前调用，可以通过返回值来决定是否允许继续执行',
             version: '',
             type: 'Function',
             enum: '',
@@ -1485,6 +1524,15 @@ const apis = [
             type: 'boolean',
             enum: '',
             defVal: 'false',
+            list: []
+          },
+          {
+            name: 'showIcon',
+            desc: '是否显示图标按钮',
+            version: '',
+            type: 'boolean',
+            enum: '',
+            defVal: 'true',
             list: []
           },
           {
@@ -1562,7 +1610,7 @@ const apis = [
           },
           {
             name: 'visibleMethod',
-            desc: '该函数 Function({type, options, columns, row?, rowIndex?, column?, columnIndex?}) 的返回值用来决定是否允许显示右键菜单（对于需要对菜单进行权限控制时可能会用到）',
+            desc: '该函数 Function({ type, options, columns, row?, rowIndex?, column?, columnIndex? }) 的返回值用来决定是否允许显示右键菜单（对于需要对菜单进行权限控制时可能会用到）',
             version: '',
             type: 'Function',
             enum: '',
@@ -1590,12 +1638,21 @@ const apis = [
         list: [
           {
             name: 'selected',
-            desc: '开启单元格选中功能',
+            desc: '开启单元格选中功能（只对 edit-config.mode=cell 有效）',
             version: '',
             type: 'boolean',
             enum: '',
             defVal: 'false',
             list: []
+          // },
+          // {
+          //   name: 'area',
+          //   desc: '如果功能被支持，则开启单元格区域选取功能，非连续的区域，按住 Ctrl 键，用鼠标逐一选取',
+          //   version: 'pro',
+          //   type: 'boolean',
+          //   enum: '',
+          //   defVal: 'false',
+          //   list: []
           }
         ]
       },
@@ -1643,14 +1700,6 @@ const apis = [
             defVal: 'false',
             list: []
           },
-          // {
-          //   name: 'isCut',
-          //   desc: '开启复制粘贴功能',
-          //   type: 'boolean',
-          //   enum: '',
-          //   defVal: 'false',
-          //   list: []
-          // },
           {
             name: 'isEdit',
             desc: '开启任意键进入编辑（功能键除外）',
@@ -1660,9 +1709,36 @@ const apis = [
             defVal: 'false',
             list: []
           },
+          // {
+          //   name: 'isClip',
+          //   desc: '用于 mouse-config.area，开启复制/剪贴/粘贴功能',
+          //   version: 'pro',
+          //   type: 'Boolean',
+          //   enum: '',
+          //   defVal: 'false',
+          //   list: []
+          // },
+          // {
+          //   name: 'isChecked',
+          //   desc: '用于 mouse-config.area & column.type=checkbox|radio，开启空格键切换复选框或单选框状态功能',
+          //   version: 'pro',
+          //   type: 'Boolean',
+          //   enum: '',
+          //   defVal: 'false',
+          //   list: []
+          // },
+          // {
+          //   name: 'enterToTab',
+          //   desc: '用于 mouse-config.area，是否将回车键行为改成 Tab 键行为',
+          //   version: 'pro',
+          //   type: 'Boolean',
+          //   enum: '',
+          //   defVal: 'false',
+          //   list: []
+          // },
           {
             name: 'editMethod',
-            desc: '只对 isEdit=true 有效，用于重写选中编辑处理逻辑，该函数 Function({row, rowIndex, column, columnIndex}) 可以返回 false 来阻止默认行为',
+            desc: '只对 isEdit=true 有效，用于重写选中编辑处理逻辑，该函数 Function({ row, rowIndex, column, columnIndex }) 可以返回 false 来阻止默认行为',
             version: '',
             type: 'Function',
             enum: '',
@@ -1735,7 +1811,7 @@ const apis = [
           },
           {
             name: 'activeMethod',
-            desc: '该方法 Function({row, rowIndex, column, columnIndex}) 的返回值用来决定该单元格是否允许编辑',
+            desc: '该方法 Function({ row, rowIndex, column, columnIndex }) 的返回值用来决定该单元格是否允许编辑',
             version: '',
             type: 'Function',
             enum: '',
@@ -1947,7 +2023,7 @@ const apis = [
         list: [
           {
             name: 'storage',
-            desc: '是否启用 localStorage 本地保存，会将列操作状态保留在本地',
+            desc: '是否启用 localStorage 本地保存，会将列操作状态保留在本地（需要有 id）',
             version: '',
             type: 'any',
             enum: '',
@@ -1975,7 +2051,7 @@ const apis = [
           },
           {
             name: 'checkMethod',
-            desc: '自定义列是否允许列选中的方法，该方法 Function({column}) 的返回值用来决定这一列的 checkbox 是否可以选中',
+            desc: '自定义列是否允许列选中的方法，该方法 Function({ column }) 的返回值用来决定这一列的 checkbox 是否可以选中',
             version: '',
             type: 'Function',
             enum: '',
@@ -1995,6 +2071,7 @@ const apis = [
       },
       {
         name: 'cloak',
+        abandoned: true,
         desc: '用于低性能的浏览器，可以设置为 true 来避免初始化渲染时的闪动',
         version: '',
         type: 'boolean',
@@ -2004,6 +2081,7 @@ const apis = [
       },
       {
         name: 'delay-hover',
+        abandoned: true,
         desc: '当表格发生拖动、滚动...等行为时，至少多少毫秒之后才允许触发 hover 事件',
         version: '',
         type: 'number',
@@ -2030,29 +2108,11 @@ const apis = [
           },
           {
             name: 'oSize',
-            desc: '当剩余数据少于指定列时触发重新渲染',
+            desc: '指定每次渲染的数据偏移量，偏移量越大渲染次数就越少，但每次渲染耗时就越久（对于古董级的低性能浏览器可以设置大一点）',
             version: '',
             type: 'number',
             enum: '',
-            defVal: '默认自动计算',
-            list: []
-          },
-          {
-            name: 'rSize',
-            desc: '每次渲染条数',
-            version: '',
-            type: 'number',
-            enum: '',
-            defVal: '默认自动计算',
-            list: []
-          },
-          {
-            name: 'vSize',
-            desc: '指定可视区域条数',
-            version: '',
-            type: 'number',
-            enum: '',
-            defVal: '默认自动计算',
+            defVal: '0',
             list: []
           }
         ]
@@ -2076,31 +2136,13 @@ const apis = [
           },
           {
             name: 'oSize',
-            desc: '当剩余数据少于指定行时触发重新渲染',
+            desc: '指定每次渲染的数据偏移量，偏移量越大渲染次数就越少，但每次渲染耗时就越久（对于古董级的低性能浏览器可以设置大一点）',
             version: '',
             type: 'number',
             enum: '',
-            defVal: '默认自动计算',
+            defVal: '0',
             list: []
-          },
-          {
-            name: 'rSize',
-            desc: '每次渲染条数',
-            version: '',
-            type: 'number',
-            enum: '',
-            defVal: '默认自动计算',
-            list: []
-          },
-          {
-            name: 'vSize',
-            desc: '指定可视区域条数',
-            version: '',
-            type: 'number',
-            enum: '',
-            defVal: '默认自动计算',
-            list: []
-          },
+          }
           // {
           //   name: 'rHeight',
           //   desc: '指定行高',
@@ -2110,15 +2152,15 @@ const apis = [
           //   defVal: '默认自动计算',
           //   list: []
           // },
-          {
-            name: 'adaptive',
-            desc: '自动适配最优的渲染方式',
-            version: '',
-            type: 'boolean',
-            enum: '',
-            defVal: 'true',
-            list: []
-          }
+          // {
+          //   name: 'adaptive',
+          //   desc: '自动适配最优的渲染方式',
+          //   version: '',
+          //   type: 'boolean',
+          //   enum: '',
+          //   defVal: 'true',
+          //   list: []
+          // }
         ]
       // },
       // {
@@ -2666,6 +2708,24 @@ const apis = [
         list: []
       },
       {
+        name: 'removeMergeCells(merges)',
+        desc: '取消单元格的临时合并状态，如果为数组，则取消多个合并',
+        version: '',
+        type: 'Promise<merges>',
+        enum: '',
+        defVal: 'merges: {row: Row, col: ColumnInfo} | {row: Row, col: ColumnInfo}[]',
+        list: []
+      },
+      {
+        name: 'removeMergeFooterItems(merges)',
+        desc: '取消表尾的临时合并状态，如果为数组，则取消多个合并',
+        version: '',
+        type: 'Promise<merges>',
+        enum: '',
+        defVal: 'merges: {row: Row, col: ColumnInfo} | {row: Row, col: ColumnInfo}[]',
+        list: []
+      },
+      {
         name: 'getRowIndex(row)',
         desc: '根据 row 获取相对于 data 中的索引',
         version: '',
@@ -2864,6 +2924,24 @@ const apis = [
         list: []
       },
       {
+        name: 'getMergeCells()',
+        desc: '获取临时合并的单元格',
+        version: '',
+        type: 'Array<{row: any, col: ColumnInfo, rowspan: number, colspan: number}>',
+        enum: '',
+        defVal: '',
+        list: []
+      },
+      {
+        name: 'getMergeFooterItems()',
+        desc: '获取临时合并的表尾',
+        version: '',
+        type: 'Array<{row: any, col: ColumnInfo, rowspan: number, colspan: number}>',
+        enum: '',
+        defVal: '',
+        list: []
+      },
+      {
         name: 'getCurrentColumn()',
         desc: '用于 highlight-current-column，获取当前列',
         version: '',
@@ -2962,6 +3040,33 @@ const apis = [
         defVal: '',
         list: []
       },
+      // {
+      //   name: 'getCellAreas()',
+      //   desc: '用于 mouse-config.area，用于获取鼠标选择的所有区域',
+      //   version: 'pro',
+      //   type: 'Array<{cols: ColumnConfig[], rows: any[]}>',
+      //   enum: '',
+      //   defVal: '',
+      //   list: []
+      // },
+      // {
+      //   name: 'getActiveCellArea()',
+      //   desc: '用于 mouse-config.area，用于获取区域中的活动单元格',
+      //   version: 'pro',
+      //   type: '{column: ColumnConfig, row: any}',
+      //   enum: '',
+      //   defVal: '',
+      //   list: []
+      // },
+      // {
+      //   name: 'getCopyCellArea()',
+      //   desc: '用于 mouse-config.area，用于获取被标记为复制状态的区域',
+      //   version: 'pro',
+      //   type: '{cols: ColumnConfig[], rows: any[]}',
+      //   enum: '',
+      //   defVal: '',
+      //   list: []
+      // },
       {
         name: 'getScroll()',
         desc: '获取表格的滚动状态',
@@ -2971,6 +3076,15 @@ const apis = [
         defVal: '',
         list: []
       },
+      // {
+      //   name: 'toCellAreaText(areaItem)',
+      //   desc: '用于 mouse-config.area，将指定区域转成文本格式',
+      //   version: 'pro',
+      //   type: 'string',
+      //   enum: '',
+      //   defVal: 'areaItem: MouseCellArea',
+      //   list: []
+      // },
       {
         name: 'isActiveByRow(row)',
         desc: '用于 edit-config，判断行是否为激活编辑状态',
@@ -3106,6 +3220,33 @@ const apis = [
         defVal: 'row: Row, field: string',
         list: []
       },
+      // {
+      //   name: 'setCellAreas(areas)',
+      //   desc: '用于 mouse-config.area，选择指定区域的单元格',
+      //   version: 'pro',
+      //   type: 'Promise',
+      //   enum: '',
+      //   defVal: 'areas: CellAreaOptions',
+      //   list: []
+      // },
+      {
+        name: 'setMergeCells(merges)',
+        desc: '临时合并单元格，如果为数组则合并多个',
+        version: '',
+        type: 'Promise',
+        enum: '',
+        defVal: 'merges: MergeOptions | MergeOptions[]',
+        list: []
+      },
+      {
+        name: 'setMergeFooterItems(merges)',
+        desc: '临时合并表尾，如果为数组则合并多个',
+        version: '',
+        type: 'Promise',
+        enum: '',
+        defVal: 'merges: MergeOptions | MergeOptions[]',
+        list: []
+      },
       {
         name: 'setRowExpand(rows, checked)',
         desc: '用于 expand-config，设置展开行，二个参数设置这一行展开与否',
@@ -3221,6 +3362,24 @@ const apis = [
         type: 'Promise',
         enum: '',
         defVal: 'row: Row',
+        list: []
+      },
+      {
+        name: 'clearMergeCells()',
+        desc: '手动清除临时合并的单元格',
+        version: '',
+        type: 'Promise',
+        enum: '',
+        defVal: '',
+        list: []
+      },
+      {
+        name: 'clearMergeFooterItems()',
+        desc: '手动清除临时合并的表尾',
+        version: '',
+        type: 'Promise',
+        enum: '',
+        defVal: '',
         list: []
       },
       {
@@ -3352,6 +3511,24 @@ const apis = [
       // {
       //   name: 'clearCopyed()',
       //   desc: '手动清空已复制的内容',
+      //   type: 'Promise',
+      //   enum: '',
+      //   defVal: '',
+      //   list: []
+      // },
+      // {
+      //   name: 'clearCellAreas()',
+      //   desc: '用于 mouse-config.area，手动清除鼠标选择的区域',
+      //   version: 'pro',
+      //   type: 'Promise',
+      //   enum: '',
+      //   defVal: '',
+      //   list: []
+      // },
+      // {
+      //   name: 'clearCopyCellArea()',
+      //   desc: '用于 mouse-config.area，手动清除标记为复制粘贴的区域',
+      //   version: 'pro',
       //   type: 'Promise',
       //   enum: '',
       //   defVal: '',
@@ -3549,7 +3726,7 @@ const apis = [
       },
       {
         name: 'validate(rows, callback)',
-        desc: '表格校验函数，如果指定 row 或 rows 则校验指定一行或多行，否则校验整个表格。该回调函数会在校验结束后被调用 callback(errMap)。若不传入回调函数，则会返回一个 promise',
+        desc: '快速校验，如果存在记录不通过的记录，则返回不再继续校验（异步校验除外）；如果第一个参数为 true 则校验当前表格数据，如果指定 row 或 rows 则校验指定行或多行，如果不指定，则默认校验状态发生变动的数据，例如新增或修改。该回调函数会在校验结束后被调用 callback(errMap)。若不传入回调函数，则会返回一个 promise',
         version: '',
         type: 'Promise<ErrMap>',
         enum: '',
@@ -3558,7 +3735,7 @@ const apis = [
       },
       {
         name: 'fullValidate(rows, callback)',
-        desc: '表格完整校验函数，和 validate 的区别就是会对全量数据的所有规则进行完整校验',
+        desc: '完整校验，和 validate 的区别就是会给有效数据中的每一行进行校验',
         version: '',
         type: 'Promise<ErrMap>',
         enum: '',

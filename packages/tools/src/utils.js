@@ -9,7 +9,7 @@ function getColFuncWidth (isExists, defaultWidth = 16) {
   return isExists ? defaultWidth : 0
 }
 
-class ColumnConfig {
+class ColumnInfo {
   /* eslint-disable @typescript-eslint/no-use-before-define */
   constructor ($xetable, _vm, { renderHeader, renderCell, renderFooter, renderData } = {}) {
     const $xegrid = $xetable.$xegrid
@@ -98,8 +98,7 @@ class ColumnConfig {
       renderFooter: renderFooter || _vm.renderFooter,
       renderData: renderData,
       // 单元格插槽，只对 grid 有效
-      slots: _vm.slots,
-      own: _vm
+      slots: _vm.slots
     })
     if (proxyOpts && proxyOpts.beforeColumn) {
       proxyOpts.beforeColumn({ $grid: $xegrid, column: this })
@@ -107,7 +106,7 @@ class ColumnConfig {
   }
 
   getTitle () {
-    return UtilTools.getFuncText(this.own.title || (this.type === 'seq' ? GlobalConfig.i18n('vxe.table.seqTitle') : ''))
+    return UtilTools.getFuncText(this.title || (this.type === 'seq' ? GlobalConfig.i18n('vxe.table.seqTitle') : ''))
   }
 
   getKey () {
@@ -115,8 +114,8 @@ class ColumnConfig {
   }
 
   getMinWidth () {
-    const { type, filters, sortable, remoteSort, editRender } = this
-    return 40 + getColFuncWidth(type === 'checkbox', 18) + getColFuncWidth(filters) + getColFuncWidth(sortable || remoteSort) + getColFuncWidth(editRender, 32)
+    const { type, filters, sortable, remoteSort, editRender, titleHelp } = this
+    return 40 + getColFuncWidth(type === 'checkbox', 18) + getColFuncWidth(titleHelp, 18) + getColFuncWidth(filters) + getColFuncWidth(sortable || remoteSort) + getColFuncWidth(editRender, 32)
   }
 
   update (name, value) {
@@ -177,7 +176,9 @@ export const UtilTools = {
   },
   getFilters (filters) {
     if (filters && XEUtils.isArray(filters)) {
-      return filters.map(({ label, value, data, resetValue, checked }) => ({ label, value, data, resetValue, checked: !!checked }))
+      return filters.map(({ label, value, data, resetValue, checked }) => {
+        return { label, value, data, resetValue, checked: !!checked, _checked: !!checked }
+      })
     }
     return filters
   },
@@ -229,10 +230,10 @@ export const UtilTools = {
     return XEUtils.set(row, column.property, value)
   },
   isColumn (column) {
-    return column instanceof ColumnConfig
+    return column instanceof ColumnInfo
   },
   getColumnConfig ($xetable, _vm, options) {
-    return UtilTools.isColumn(_vm) ? _vm : new ColumnConfig($xetable, _vm, options)
+    return UtilTools.isColumn(_vm) ? _vm : new ColumnInfo($xetable, _vm, options)
   },
   // 组装列配置
   assemColumn (_vm) {
@@ -245,13 +246,13 @@ export const UtilTools = {
       }
       groupConfig.children.splice([].indexOf.call($xecolumn.$el.children, $el), 0, columnConfig)
     } else {
-      $xetable.collectColumn.splice([].indexOf.call($xetable.$refs.hideColumn.children, $el), 0, columnConfig)
+      $xetable.staticColumns.splice([].indexOf.call($xetable.$refs.hideColumn.children, $el), 0, columnConfig)
     }
   },
   // 销毁列
   destroyColumn (_vm) {
     const { $xetable, columnConfig } = _vm
-    const matchObj = XEUtils.findTree($xetable.collectColumn, column => column === columnConfig)
+    const matchObj = XEUtils.findTree($xetable.staticColumns, column => column === columnConfig)
     if (matchObj) {
       matchObj.items.splice(matchObj.index, 1)
     }

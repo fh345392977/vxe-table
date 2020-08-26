@@ -1,6 +1,7 @@
 import XEUtils from 'xe-utils/methods/xe-utils'
 import VxeInput from '../../input/src/input'
 import GlobalConfig from '../../conf'
+import vSize from '../../mixins/size'
 import { UtilTools, DomTools, GlobalEvent } from '../../tools'
 
 function isOptionVisible (option) {
@@ -172,12 +173,14 @@ export function renderOptgroup (h, _vm) {
 
 export default {
   name: 'VxeSelect',
+  mixins: [vSize],
   props: {
     value: null,
     clearable: Boolean,
     placeholder: String,
     disabled: Boolean,
     multiple: Boolean,
+    multiCharOverflow: { type: [Number, String], default: () => GlobalConfig.select.multiCharOverflow },
     prefixIcon: String,
     placement: String,
     options: Array,
@@ -214,9 +217,6 @@ export default {
     }
   },
   computed: {
-    vSize () {
-      return this.size || this.$parent.size || this.$parent.vSize
-    },
     propsOpts () {
       return this.optionProps || {}
     },
@@ -238,13 +238,16 @@ export default {
     isGroup () {
       return this.fullGroupList.some(item => item.options && item.options.length)
     },
+    multiMaxCharNum () {
+      return XEUtils.toNumber(this.multiCharOverflow)
+    },
     selectLabel () {
-      const { value, multiple } = this
+      const { value, multiple, multiMaxCharNum } = this
       if (value && multiple) {
         return value.map(val => {
           const label = getSelectLabel(this, val)
-          if (label.length > 8) {
-            return `${label.substring(0, 8)}...`
+          if (multiMaxCharNum > 0 && label.length > multiMaxCharNum) {
+            return `${label.substring(0, multiMaxCharNum)}...`
           }
           return label
         }).join(', ')
@@ -570,62 +573,64 @@ export default {
         const { $refs, transfer, placement, panelIndex } = this
         const targetElem = $refs.input.$el
         const panelElem = $refs.panel
-        const targetHeight = targetElem.offsetHeight
-        const targetWidth = targetElem.offsetWidth
-        const panelHeight = panelElem.offsetHeight
-        const panelWidth = panelElem.offsetWidth
-        const marginSize = 5
-        const panelStyle = {
-          zIndex: panelIndex
-        }
-        const { boundingTop, boundingLeft, visibleHeight, visibleWidth } = DomTools.getAbsolutePos(targetElem)
-        let panelPlacement = 'bottom'
-        if (transfer) {
-          let left = boundingLeft
-          let top = boundingTop + targetHeight
-          if (placement === 'top') {
-            panelPlacement = 'top'
-            top = boundingTop - panelHeight
-          } else {
-            // 如果下面不够放，则向上
-            if (top + panelHeight + marginSize > visibleHeight) {
+        if (panelElem && targetElem) {
+          const targetHeight = targetElem.offsetHeight
+          const targetWidth = targetElem.offsetWidth
+          const panelHeight = panelElem.offsetHeight
+          const panelWidth = panelElem.offsetWidth
+          const marginSize = 5
+          const panelStyle = {
+            zIndex: panelIndex
+          }
+          const { boundingTop, boundingLeft, visibleHeight, visibleWidth } = DomTools.getAbsolutePos(targetElem)
+          let panelPlacement = 'bottom'
+          if (transfer) {
+            let left = boundingLeft
+            let top = boundingTop + targetHeight
+            if (placement === 'top') {
               panelPlacement = 'top'
               top = boundingTop - panelHeight
+            } else {
+              // 如果下面不够放，则向上
+              if (top + panelHeight + marginSize > visibleHeight) {
+                panelPlacement = 'top'
+                top = boundingTop - panelHeight
+              }
+              // 如果上面不够放，则向下（优先）
+              if (top < marginSize) {
+                panelPlacement = 'bottom'
+                top = boundingTop + targetHeight
+              }
             }
-            // 如果上面不够放，则向下（优先）
-            if (top < marginSize) {
-              panelPlacement = 'bottom'
-              top = boundingTop + targetHeight
+            // 如果溢出右边
+            if (left + panelWidth + marginSize > visibleWidth) {
+              left -= left + panelWidth + marginSize - visibleWidth
             }
-          }
-          // 如果溢出右边
-          if (left + panelWidth + marginSize > visibleWidth) {
-            left -= left + panelWidth + marginSize - visibleWidth
-          }
-          // 如果溢出左边
-          if (left < marginSize) {
-            left = marginSize
-          }
-          Object.assign(panelStyle, {
-            left: `${left}px`,
-            top: `${top}px`,
-            minWidth: `${targetWidth}px`
-          })
-        } else {
-          if (placement === 'top') {
-            panelPlacement = 'top'
-            panelStyle.bottom = `${targetHeight}px`
+            // 如果溢出左边
+            if (left < marginSize) {
+              left = marginSize
+            }
+            Object.assign(panelStyle, {
+              left: `${left}px`,
+              top: `${top}px`,
+              minWidth: `${targetWidth}px`
+            })
           } else {
-            // 如果下面不够放，则向上
-            if (boundingTop + targetHeight + panelHeight > visibleHeight) {
+            if (placement === 'top') {
               panelPlacement = 'top'
               panelStyle.bottom = `${targetHeight}px`
+            } else {
+              // 如果下面不够放，则向上
+              if (boundingTop + targetHeight + panelHeight > visibleHeight) {
+                panelPlacement = 'top'
+                panelStyle.bottom = `${targetHeight}px`
+              }
             }
           }
+          this.panelStyle = panelStyle
+          this.panelPlacement = panelPlacement
+          return this.$nextTick()
         }
-        this.panelStyle = panelStyle
-        this.panelPlacement = panelPlacement
-        return this.$nextTick()
       })
     },
     focus () {
