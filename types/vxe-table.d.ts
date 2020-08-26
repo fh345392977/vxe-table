@@ -83,6 +83,32 @@ export interface PluginObject {
   [key: string]: any;
 }
 
+export interface VXETableClipboard {
+  text: string;
+  [key: string]: any;
+}
+
+export interface VXETableByVueProperty {
+  /**
+   * 读取内置国际化
+   */
+  t(key: string): any;
+  /**
+   * 全局的模态窗口
+   */
+  modal: typeof ModalController;
+  /**
+   * 剪贴板
+   */
+  clipboard?: VXETableClipboard;
+}
+
+declare module 'vue/types/vue' {
+  interface Vue {
+    $vxe: VXETableByVueProperty;
+  }
+}
+
 declare global {
   interface Window {
     VXETable: VXETableStatic;

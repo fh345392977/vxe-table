@@ -14,6 +14,7 @@ export default {
       reqProp: '缺少必要的 "{{0}}" 参数，这可能会导致出现错误',
       emptyProp: '参数 "{{0}}" 不允许为空',
       errProp: '不支持的参数 "{{0}}"，可能为 "{{1}}"',
+      fieldRepet: '列字段 "{{0}}" 重复了，这可能会导致某些功能无法使用',
       notFunc: '方法 "{{0}}" 不存在',
       notSlot: '插槽 "{{0}}" 不存在',
       noTree: '树结构不支持 "{{0}}"',
@@ -26,6 +27,49 @@ export default {
       notExp: '该浏览器不支持导入/导出功能',
       impFields: '导入失败，请检查字段名和数据格式是否正确',
       treeNotImp: '树表格不支持导入'
+    },
+    renderer: {
+      search: '搜索',
+      cases: {
+        equal: '等于',
+        unequal: '不等于',
+        gt: '大于',
+        ge: '大于或等于',
+        lt: '小于',
+        le: '小于或等于',
+        begin: '开头是',
+        notbegin: '开头不是',
+        endin: '结尾是',
+        notendin: '结尾不是',
+        include: '包含',
+        exclude: '不包含',
+        between: '介于',
+        custom: '自定义筛选',
+        insensitive: '不区分大小写'
+      },
+      combination: {
+        menus: {
+          sortAsc: '升序',
+          sortDesc: '降序',
+          fixedColumn: '锁定列',
+          fixedGroup: '锁定组',
+          cancelFixed: '取消锁定',
+          fixedLeft: '锁定左侧',
+          fixedRight: '锁定右侧',
+          clearFilter: '清除筛选',
+          textOption: '文本筛选',
+          numberOption: '数值筛选'
+        },
+        popup: {
+          title: '自定义筛选的方式',
+          currColumnTitle: '当前列：',
+          and: '与',
+          or: '或',
+          describeHtml: '可用 ? 代表单个字符<br/>用 * 代表任意多个字符'
+        },
+        empty: '(空白)',
+        notData: '无匹配项'
+      }
     },
     table: {
       emptyText: '暂无数据',

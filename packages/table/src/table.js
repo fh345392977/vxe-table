@@ -134,7 +134,11 @@ export default {
     headerRowStyle: [Object, Function],
     // 给表尾行附加样式
     footerRowStyle: [Object, Function],
-    // 合并行或列
+    // 合并指定单元格
+    mergeCells: Array,
+    // 合并指定的表尾数据
+    mergeFooterItems: Array,
+    // 自定义合并行或列的方法
     spanMethod: Function,
     // 表尾合并行或列
     footerSpanMethod: Function,
@@ -166,6 +170,8 @@ export default {
     autoResize: { type: Boolean, default: () => GlobalConfig.table.autoResize },
     // 是否自动根据状态属性去更新响应式表格宽高
     syncResize: [Boolean, String, Number],
+    // 设置列的默认参数，仅对部分支持的属性有效
+    columnConfig: Object,
     // 序号配置项
     seqConfig: Object,
     // 排序配置项
@@ -293,6 +299,10 @@ export default {
       treeLazyLoadeds: [],
       // 树节点不确定状态的列表
       treeIndeterminates: [],
+      // 合并单元格的对象集
+      mergeList: [],
+      // 合并表尾数据的对象集
+      mergeFooterList: [],
       // 是否已经加载了筛选
       hasFilterPanel: false,
       // 当前选中的筛选列
@@ -429,6 +439,9 @@ export default {
         mini: 36
       }
     },
+    columnOpts () {
+      return Object.assign({}, this.columnConfig)
+    },
     seqOpts () {
       return Object.assign({ startIndex: 0 }, GlobalConfig.table.seqConfig, this.seqConfig)
     },
@@ -455,6 +468,9 @@ export default {
     },
     mouseOpts () {
       return Object.assign({}, GlobalConfig.table.mouseConfig, this.mouseConfig)
+    },
+    keyboardOpts () {
+      return Object.assign({}, this.keyboardConfig)
     },
     // 是否使用了分组表头
     isGroup () {
@@ -531,12 +547,6 @@ export default {
       }
       return 'default'
     },
-    customHeight () {
-      return DomTools.calcHeight(this, 'height')
-    },
-    customMaxHeight () {
-      return DomTools.calcHeight(this, 'maxHeight')
-    },
     /**
      * 判断列全选的复选框是否禁用
      */
@@ -580,6 +590,8 @@ export default {
     collectColumn (value) {
       const tableFullColumn = UtilTools.getColumnList(value)
       this.tableFullColumn = tableFullColumn
+      this.clearMergeCells()
+      this.clearMergeFooterItems()
       this.cacheColumnMap()
       if (this.customs) {
         this.mergeCustomColumn(this.customs)
@@ -596,8 +608,8 @@ export default {
       if ((this.scrollXLoad || this.scrollYLoad) && this.expandColumn) {
         UtilTools.warn('vxe.error.scrollErrProp', ['column.type=expand'])
       }
-      if (this.isGroup && this.mouseConfig && (this.mouseOpts.range || this.mouseOpts.checked)) {
-        UtilTools.error('vxe.error.groupMouseRange', ['mouse-config.range'])
+      if (this.isGroup && this.mouseConfig && this.mouseOpts.checked) {
+        UtilTools.error('vxe.error.groupMouseRange', ['mouse-config.checked'])
       }
       this.$nextTick(() => {
         if (this.$toolbar) {
@@ -693,6 +705,14 @@ export default {
     if (!this.rowId && (this.checkboxOpts.reserve || this.checkboxOpts.checkRowKeys || this.radioOpts.reserve || this.radioOpts.checkRowKey || this.expandOpts.expandRowKeys || this.treeOpts.expandRowKeys)) {
       UtilTools.warn('vxe.error.reqProp', ['row-id'])
     }
+    // 在 v3.0 中废弃 column-width
+    if (this.columnWidth) {
+      UtilTools.warn('vxe.error.delProp', ['column-width', 'column-config.width'])
+    }
+    // 在 v3.0 中废弃 column-min-width
+    if (this.columnMinWidth) {
+      UtilTools.warn('vxe.error.delProp', ['column-min-width', 'column-config.minWidth'])
+    }
     // 在 v3.0 中废弃 start-index
     if (this.startIndex) {
       UtilTools.warn('vxe.error.delProp', ['start-index', 'seq-config.startIndex'])
@@ -723,9 +743,12 @@ export default {
     if (this.remoteFilter) {
       UtilTools.warn('vxe.error.delProp', ['remote-filter', 'filter-config.remote'])
     }
+    if (mouseOpts.checked && mouseOpts.area) {
+      UtilTools.error('vxe.error.errProp', ['mouse-config.checked', 'mouse-config.area'])
+    }
     if (this.mouseConfig && this.editConfig) {
-      if ((mouseOpts.range || mouseOpts.checked) && editOpts.trigger !== 'dblclick') {
-        UtilTools.warn('vxe.error.errProp', ['mouse-config.range', 'edit-config.trigger=dblclick'])
+      if (mouseOpts.checked && editOpts.trigger !== 'dblclick') {
+        UtilTools.warn('vxe.error.errProp', ['mouse-config.checked', 'edit-config.trigger=dblclick'])
       }
     }
     if (treeConfig && this.stripe) {
@@ -760,7 +783,10 @@ export default {
       UtilTools.error('vxe.error.reqProp', ['id'])
     }
     if (this.treeConfig && this.checkboxOpts.range) {
-      UtilTools.warn('vxe.error.noTree', ['checkbox-config.range'])
+      UtilTools.error('vxe.error.noTree', ['checkbox-config.range'])
+    }
+    if (this.treeConfig && this.mouseOpts.area) {
+      UtilTools.error('vxe.error.noTree', ['mouse-config.area'])
     }
     // 检查是否有安装需要的模块
     let errorModuleName
@@ -802,6 +828,9 @@ export default {
       }
       this.updateStyle()
     })
+    GlobalEvent.on(this, 'paste', this.handleGlobalPasteEvent)
+    GlobalEvent.on(this, 'copy', this.handleGlobalCopyEvent)
+    GlobalEvent.on(this, 'cut', this.handleGlobalCutEvent)
     GlobalEvent.on(this, 'mousedown', this.handleGlobalMousedownEvent)
     GlobalEvent.on(this, 'blur', this.handleGlobalBlurEvent)
     GlobalEvent.on(this, 'mousewheel', this.handleGlobalMousewheelEvent)
@@ -843,6 +872,9 @@ export default {
     this.preventEvent(null, 'beforeDestroy')
   },
   destroyed () {
+    GlobalEvent.off(this, 'paste')
+    GlobalEvent.off(this, 'copy')
+    GlobalEvent.off(this, 'cut')
     GlobalEvent.off(this, 'mousedown')
     GlobalEvent.off(this, 'blur')
     GlobalEvent.off(this, 'mousewheel')
@@ -899,8 +931,6 @@ export default {
       emptyOpts
     } = this
     const { leftList, rightList } = columnStore
-    // 在 v3.0 中废弃 mouse-config.checked
-    const isMouseChecked = mouseConfig && (mouseOpts.range || mouseOpts.checked)
     let emptyContent
     if ($scopedSlots.empty) {
       emptyContent = $scopedSlots.empty.call(this, { $table: this }, h)
@@ -927,7 +957,9 @@ export default {
         'is--round': this.round,
         't--stripe': stripe,
         't--selected': mouseConfig && mouseOpts.selected,
-        't--checked': isMouseChecked,
+        // 在 v3.0 中废弃 mouse-config.checked
+        't--checked': mouseConfig && mouseOpts.checked,
+        'is--area': mouseConfig && mouseOpts.area,
         'row--highlight': highlightHoverRow,
         'column--highlight': highlightHoverColumn,
         'is--loading': isCloak || loading,

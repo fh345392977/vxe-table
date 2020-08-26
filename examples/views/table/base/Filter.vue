@@ -1,7 +1,7 @@
 <template>
   <div>
     <p class="tip">
-      通过设置 <table-column-api-link prop="filters"/> 属性和 <table-column-api-link prop="filter-method"/> 方法可以支持列筛选功能，可以通过 <table-column-api-link prop="filter-multiple"/>=false 设置为单选<br>
+      通过设置 <table-column-api-link prop="filters"/> 属性和 <table-column-api-link prop="filter-method"/> 方法可以开启列筛选功能，通过 <table-column-api-link prop="filter-multiple"/>=false 设置为单选<br>
       如果是服务端筛选，只需加上 <table-api-link prop="filter-config"/>={<table-api-link prop="remote"/>: true} 和 <table-api-link prop="filter-change"/> 事件就可以实现<br>
       如果是动态数据请通过 <table-api-link prop="setFilter"/> 方法更新，参数 <table-column-api-link prop="filters"/> 不支持动态数据<br>
       $panel 对象（<router-link  class="link" :to="{name: 'TableManualFilter'}">查看高级用法</router-link>）:<br>
@@ -15,15 +15,15 @@
       highlight-hover-row
       height="400"
       :data="tableData">
-      <vxe-table-column type="seq" width="60"></vxe-table-column>
-      <vxe-table-column field="name" title="Name" sortable :filters="[{label: 'id大于10', value: 10}, {label: 'id大于40', value: 40}]" :filter-method="filterNameMethod"></vxe-table-column>
+      <vxe-table-column field="id" title="ID"></vxe-table-column>
+      <vxe-table-column field="name" title="Name" sortable :filters="[{label: 'id大于1000003', value: 1000003}, {label: 'id大于1000020', value: 1000020}]" :filter-method="filterNameMethod"></vxe-table-column>
       <vxe-table-column field="sex" title="Sex" sortable :filters="[{label: 'Man', value: '1'}, {label: 'Woman', value: '0'}]" :filter-multiple="false"></vxe-table-column>
       <vxe-table-column field="age" title="Age" :filters="[{ data: '' }]" :filter-method="filterAgeMethod">
         <template v-slot:filter="{ $panel, column }">
           <input type="type" v-for="(option, index) in column.filters" :key="index" v-model="option.data" @input="$panel.changeOption($event, !!option.data, option)">
         </template>
       </vxe-table-column>
-      <vxe-table-column field="time" title="Time" sortable :filters="[{label: '本周', value: '1'}, {label: '上周', value: '2'}]"></vxe-table-column>
+      <vxe-table-column field="time" title="Time" sortable></vxe-table-column>
     </vxe-table>
 
     <p class="demo-code">{{ $t('app.body.button.showCode') }}</p>
@@ -42,7 +42,7 @@
       :data="tableData">
       <vxe-table-column type="seq" width="60"></vxe-table-column>
       <vxe-table-column title="基本信息">
-        <vxe-table-column field="name" title="Name" sortable :filters="[{label: 'id大于10', value: 10}, {label: 'id大于40', value: 40, checked: true}]" :filter-method="filterNameMethod"></vxe-table-column>
+        <vxe-table-column field="name" title="Name" sortable :filters="[{label: 'id大于1000003', value: 1000003}, {label: 'id大于1000020', value: 1000020, checked: true}]" :filter-method="filterNameMethod"></vxe-table-column>
         <vxe-table-column field="sex" title="Sex" sortable :filters="[{label: 'Man', value: '1'}, {label: 'Woman', value: '0'}]"></vxe-table-column>
       </vxe-table-column>
       <vxe-table-column title="其他">
@@ -80,15 +80,15 @@ export default {
           highlight-hover-row
           height="400"
           :data="tableData">
-          <vxe-table-column type="seq" width="60"></vxe-table-column>
-          <vxe-table-column field="name" title="Name" sortable :filters="[{label: 'id大于10', value: 10}, {label: 'id大于40', value: 40}]" :filter-method="filterNameMethod"></vxe-table-column>
+          <vxe-table-column field="id" title="ID"></vxe-table-column>
+          <vxe-table-column field="name" title="Name" sortable :filters="[{label: 'id大于1000003', value: 1000003}, {label: 'id大于1000020', value: 1000020}]" :filter-method="filterNameMethod"></vxe-table-column>
           <vxe-table-column field="sex" title="Sex" sortable :filters="[{label: 'Man', value: '1'}, {label: 'Woman', value: '0'}]" :filter-multiple="false"></vxe-table-column>
           <vxe-table-column field="age" title="Age" :filters="[{ data: '' }]" :filter-method="filterAgeMethod">
             <template v-slot:filter="{ $panel, column }">
               <input type="type" v-for="(option, index) in column.filters" :key="index" v-model="option.data" @input="$panel.changeOption($event, !!option.data, option)">
             </template>
           </vxe-table-column>
-          <vxe-table-column field="time" title="Time" sortable :filters="[{label: '本周', value: '1'}, {label: '上周', value: '2'}]"></vxe-table-column>
+          <vxe-table-column field="time" title="Time" sortable></vxe-table-column>
         </vxe-table>
         `,
         `
@@ -119,7 +119,7 @@ export default {
           :data="tableData">
           <vxe-table-column type="seq" width="60"></vxe-table-column>
           <vxe-table-column title="基本信息">
-            <vxe-table-column field="name" title="Name" sortable :filters="[{label: 'id大于10', value: 10}, {label: 'id大于40', value: 40, checked: true}]" :filter-method="filterNameMethod"></vxe-table-column>
+            <vxe-table-column field="name" title="Name" sortable :filters="[{label: 'id大于1000003', value: 1000003}, {label: 'id大于1000020', value: 1000020, checked: true}]" :filter-method="filterNameMethod"></vxe-table-column>
             <vxe-table-column field="sex" title="Sex" sortable :filters="[{label: 'Man', value: '1'}, {label: 'Woman', value: '0'}]"></vxe-table-column>
           </vxe-table-column>
           <vxe-table-column title="其他">

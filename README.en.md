@@ -79,6 +79,8 @@ A [vue](https://www.npmjs.com/package/vue) based PC form component, support add,
 * [x] Modal
 * [x] Renderer
 * [x] Virtual Scroller
+* [x] (pro) Cell area selection
+* [x] (pro) Cell copy/paste
 
 ## Modules
 

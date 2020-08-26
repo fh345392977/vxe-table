@@ -1,8 +1,7 @@
 import { CreateElement, VNode } from 'vue'
 import { VXETableModule } from './component'
-import { TableRenderParams } from './table'
 import { ColumnFilterOption, ColumnFilterParams, ColumnFilterRenderOptions, ColumnFilterSlotParams, ColumnFilterMethodParams } from './extends/filter'
-import { RenderOptions, OptionProps, OptionGroupProps } from './extends/renderer'
+import { ColumnCellRenderParams, ColumnDefaultSlotParams, ColumnIconSlotParams, ColumnContentSlotParams, RenderOptions, OptionProps, OptionGroupProps } from './extends/renderer'
 import { ColumnHeaderSlotParams, ColumnHeaderRenderParams } from './extends/header'
 import { ColumnFooterSlotParams, ColumnFooterRenderParams } from './extends/footer'
 import { ColumnEditRenderOptions, ColumnEditSlotParams } from './extends/edit'
@@ -299,14 +298,10 @@ export interface ColumnOptions {
   };
 }
 
-export interface ColumnDefaultSlotParams extends ColumnCellRenderParams { }
-export interface ColumnContentSlotParams extends ColumnContentRenderParams { }
-export interface ColumnIconSlotParams extends ColumnIconRenderParams { }
-
 /**
  * 列对象
  */
-export class ColumnConfig {
+export class ColumnInfo {
   title: string;
   width: number | string;
   minWidth: number | string;
@@ -342,10 +337,12 @@ export class ColumnConfig {
     update: boolean;
     value: any;
   };
-  children: ColumnConfig[];
+  children: ColumnInfo[];
 
   getTitle(): string;
 }
+
+export class ColumnConfig extends ColumnInfo {}
 
 /**
  * 默认的渲染配置项
@@ -396,36 +393,6 @@ export interface ColumnContentRenderOptions extends RenderOptions {
 }
 
 /**
- * 单元格渲染参数
- */
-export interface ColumnCellRenderParams extends TableRenderParams {
-  /**
-   * 列对象
-   */
-  column: ColumnConfig;
-  /**
-   * 相对于 columns 中的索引
-   */
-  columnIndex: number;
-  /**
-   * 相对于可视区渲染中的列索引
-   */
-  $columnIndex: number;
-  /**
-   * 行数据对象
-   */
-  row: any;
-  /**
-   * 相对于 data 中的索引
-   */
-  rowIndex: number;
-  /**
-   * 相对于当前表格数据的索引
-   */
-  $rowIndex: number;
-}
-
-/**
  * 格式化方法参数
  */
 export interface ColumnFormatterMethodParams {
@@ -436,12 +403,9 @@ export interface ColumnFormatterMethodParams {
   /**
    * 列对象
    */
-  column: ColumnConfig;
+  column: ColumnInfo;
   /**
    * 行数据对象
    */
   row: any;
 }
-
-export interface ColumnContentRenderParams extends ColumnCellRenderParams { }
-export interface ColumnIconRenderParams extends ColumnCellRenderParams { }

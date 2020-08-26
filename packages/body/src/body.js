@@ -88,6 +88,20 @@ function renderBorder (h, type) {
   ])
 }
 
+function mergeMethod (mergeList, _rowIndex, _columnIndex) {
+  for (let mIndex = 0; mIndex < mergeList.length; mIndex++) {
+    const { row: mergeRowIndex, col: mergeColIndex, rowspan: mergeRowspan, colspan: mergeColspan } = mergeList[mIndex]
+    if (mergeColIndex > -1 && mergeRowIndex > -1 && mergeRowspan && mergeColspan) {
+      if (mergeRowIndex === _rowIndex && mergeColIndex === _columnIndex) {
+        return { rowspan: mergeRowspan, colspan: mergeColspan }
+      }
+      if (_rowIndex >= mergeRowIndex && _rowIndex < mergeRowIndex + mergeRowspan && _columnIndex >= mergeColIndex && _columnIndex < mergeColIndex + mergeColspan) {
+        return { rowspan: 0, colspan: 0 }
+      }
+    }
+  }
+}
+
 /**
  * 渲染列
  */
@@ -107,6 +121,7 @@ function renderColumn (h, _vm, $xetable, $seq, seq, rowid, fixedType, rowLevel, 
     currentColumn,
     cellClassName,
     cellStyle,
+    mergeList,
     spanMethod,
     radioOpts,
     checkboxOpts,
@@ -114,7 +129,6 @@ function renderColumn (h, _vm, $xetable, $seq, seq, rowid, fixedType, rowLevel, 
     treeOpts,
     tooltipOpts,
     mouseConfig,
-    mouseOpts,
     editConfig,
     editOpts,
     editRules,
@@ -127,9 +141,7 @@ function renderColumn (h, _vm, $xetable, $seq, seq, rowid, fixedType, rowLevel, 
   const { enabled } = tooltipOpts
   const columnIndex = $xetable.getColumnIndex(column)
   const _columnIndex = $xetable._getColumnIndex(column)
-  const isMouseSelected = mouseConfig && mouseOpts.selected
   // 在 v3.0 中废弃 mouse-config.checked
-  const isMouseChecked = mouseConfig && (mouseOpts.range || mouseOpts.checked)
   const fixedHiddenColumn = fixedType ? column.fixed !== fixedType : column.fixed && overflowX
   const cellOverflow = (XEUtils.isUndefined(showOverflow) || XEUtils.isNull(showOverflow)) ? allColumnOverflow : showOverflow
   let showEllipsis = cellOverflow === 'ellipsis'
@@ -182,15 +194,15 @@ function renderColumn (h, _vm, $xetable, $seq, seq, rowid, fixedType, rowLevel, 
     }
   }
   // 按下事件处理
-  if (checkboxOpts.range || isMouseChecked || isMouseSelected) {
+  if (checkboxOpts.range || mouseConfig) {
     tdOns.mousedown = evnt => {
       $xetable.triggerCellMousedownEvent(evnt, params)
     }
   }
   // 点击事件处理
   if (highlightCurrentRow ||
+    mouseConfig ||
     tableListeners['cell-click'] ||
-    isMouseChecked ||
     (editRender && editConfig) ||
     (expandOpts.trigger === 'row' || (expandOpts.trigger === 'cell')) ||
     (radioOpts.trigger === 'row' || (column.type === 'radio' && radioOpts.trigger === 'cell')) ||
@@ -208,7 +220,23 @@ function renderColumn (h, _vm, $xetable, $seq, seq, rowid, fixedType, rowLevel, 
     }
   }
   // 合并行或列
-  if (spanMethod) {
+  if (mergeList.length) {
+    const _rowIndex = $xetable._getRowIndex(row)
+    const spanRest = mergeMethod(mergeList, _rowIndex, _columnIndex)
+    if (spanRest) {
+      const { rowspan, colspan } = spanRest
+      if (!rowspan || !colspan) {
+        return null
+      }
+      if (rowspan > 1) {
+        attrs.rowspan = rowspan
+      }
+      if (colspan > 1) {
+        attrs.colspan = colspan
+      }
+    }
+  } else if (spanMethod) {
+    // 自定义合并行或列的方法
     const { rowspan = 1, colspan = 1 } = spanMethod(params) || {}
     if (!rowspan || !colspan) {
       return null
@@ -329,7 +357,7 @@ function renderRows (h, _vm, $xetable, $seq, rowLevel, fixedType, tableData, tab
           'row--stripe': stripe && ($xetable._getRowIndex(row) + 1) % 2 === 0,
           'is--new': editStore.insertList.indexOf(row) > -1,
           'row--radio': radioOpts.highlight && $xetable.selectRow === row,
-          'row--cheched': checkboxOpts.highlight && $xetable.isCheckedByCheckboxRow(row)
+          'row--checked': checkboxOpts.highlight && $xetable.isCheckedByCheckboxRow(row)
         }, rowClassName ? XEUtils.isFunction(rowClassName) ? rowClassName(params) : rowClassName : ''],
         attrs: {
           'data-rowid': rowid
@@ -440,7 +468,6 @@ export default {
     elemStore[`${prefix}list`] = $refs.tbody
     elemStore[`${prefix}xSpace`] = $refs.xSpace
     elemStore[`${prefix}ySpace`] = $refs.ySpace
-    elemStore[`${prefix}checkRange`] = $refs.checkRange
     elemStore[`${prefix}emptyBlock`] = $refs.emptyBlock
     this.$el.onscroll = this.scrollEvent
     this.$el._onscroll = this.scrollEvent
@@ -457,6 +484,7 @@ export default {
       tableData,
       tableColumn,
       showOverflow: allColumnOverflow,
+      mergeList,
       spanMethod,
       scrollXLoad,
       mouseConfig,
@@ -466,9 +494,9 @@ export default {
       keyboardConfig = {}
     } = $xetable
     // 在 v3.0 中废弃 mouse-config.checked
-    const isMouseChecked = mouseConfig && (mouseOpts.range || mouseOpts.checked)
+    const isMouseChecked = mouseConfig && mouseOpts.checked
     // 如果是固定列与设置了超出隐藏
-    if (!spanMethod) {
+    if (!mergeList.length && !spanMethod) {
       if (fixedType && allColumnOverflow) {
         tableColumn = fixedColumn
       } else if (scrollXLoad) {
@@ -542,9 +570,36 @@ export default {
         keyboardConfig.isCut ? renderBorder(h, 'copy') : null
       ]) : null,
       h('div', {
-        ref: 'checkRange',
         class: 'vxe-table--checkbox-range'
       }),
+      mouseConfig && mouseOpts.area ? h('div', {
+        staticClass: 'vxe-table--cell-area'
+      }, [
+        h('span', {
+          staticClass: 'vxe-table--cell-main-area'
+        }, [
+          h('span', {
+            staticClass: 'vxe-table--cell-main-area-btn',
+            on: {
+              mousedown (evnt) {
+                $xetable.triggerCellExtendMousedownEvent(evnt, { $table: $xetable, fixed: fixedType, type: cellType })
+              }
+            }
+          })
+        ]),
+        h('span', {
+          staticClass: 'vxe-table--cell-copy-area'
+        }),
+        h('span', {
+          staticClass: 'vxe-table--cell-extend-area'
+        }),
+        h('span', {
+          staticClass: 'vxe-table--cell-multi-area'
+        }),
+        h('span', {
+          staticClass: 'vxe-table--cell-active-area'
+        })
+      ]) : null,
       !fixedType ? h('div', {
         class: 'vxe-table--empty-block',
         ref: 'emptyBlock'
@@ -562,7 +617,7 @@ export default {
      * 如果存在列固定右侧，同步更新滚动状态
      */
     scrollEvent (evnt) {
-      const { $parent: $xetable, fixedType } = this
+      const { $el, $parent: $xetable, fixedType } = this
       const { $refs, highlightHoverRow, scrollXLoad, scrollYLoad, lastScrollTop, lastScrollLeft } = $xetable
       const { tableHeader, tableBody, leftBody, rightBody, tableFooter, validTip } = $refs
       const headerElem = tableHeader ? tableHeader.$el : null
@@ -570,7 +625,7 @@ export default {
       const bodyElem = tableBody.$el
       const leftElem = leftBody ? leftBody.$el : null
       const rightElem = rightBody ? rightBody.$el : null
-      let scrollTop = bodyElem.scrollTop
+      let scrollTop = $el.scrollTop
       const scrollLeft = bodyElem.scrollLeft
       const isX = scrollLeft !== lastScrollLeft
       const isY = scrollTop !== lastScrollTop

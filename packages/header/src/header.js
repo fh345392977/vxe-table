@@ -59,16 +59,12 @@ export default {
       highlightCurrentColumn,
       currentColumn,
       mouseConfig,
-      mouseOpts,
       scrollXLoad,
       overflowX,
       scrollbarWidth,
       getColumnIndex,
       sortOpts
     } = $xetable
-    const isMouseSelected = mouseConfig && mouseOpts.selected
-    // 在 v3.0 中废弃 mouse-config.checked
-    const isMouseChecked = mouseConfig && (mouseOpts.range || mouseOpts.checked)
     // 横向滚动渲染
     if (scrollXLoad) {
       if (fixedType) {
@@ -143,14 +139,14 @@ export default {
             if (scrollXLoad && !hasEllipsis) {
               showEllipsis = hasEllipsis = true
             }
-            if (highlightCurrentColumn || tableListeners['header-cell-click'] || isMouseChecked || sortOpts.trigger === 'cell') {
+            if (highlightCurrentColumn || tableListeners['header-cell-click'] || mouseConfig || sortOpts.trigger === 'cell') {
               thOns.click = evnt => $xetable.triggerHeaderCellClickEvent(evnt, params)
             }
             if (tableListeners['header-cell-dblclick']) {
               thOns.dblclick = evnt => $xetable.triggerHeaderCellDBLClickEvent(evnt, params)
             }
             // 按下事件处理
-            if (isMouseSelected || isMouseChecked) {
+            if (mouseConfig) {
               thOns.mousedown = evnt => $xetable.triggerHeaderCellMousedownEvent(evnt, params)
             }
             const type = column.type === 'seq' || column.type === 'index' ? 'seq' : column.type
@@ -267,12 +263,16 @@ export default {
           // 右侧固定列（不允许超过左侧固定列、不允许超过左边距）
           dragMinLeft = (leftContainer ? leftContainer.clientWidth : 0) + fixedOffsetWidth + minInterval
           left = Math.min(left, dragPosLeft + cell.clientWidth - minInterval)
+        } else {
+          dragMinLeft = Math.max(tableBodyElem.scrollLeft, dragMinLeft)
+          left = Math.min(left, tableBodyElem.clientWidth + tableBodyElem.scrollLeft - 40)
         }
         dragLeft = Math.max(left, dragMinLeft)
         resizeBarElem.style.left = `${dragLeft - scrollLeft}px`
       }
+
       $xetable._isResize = true
-      DomTools.addClass($xetable.$el, 'c--resize')
+      DomTools.addClass($xetable.$el, 'drag--resize')
       resizeBarElem.style.display = 'block'
       document.onmousemove = updateEvent
       document.onmouseup = function () {
@@ -283,9 +283,11 @@ export default {
         $xetable._isResize = false
         $xetable._lastResizeTime = Date.now()
         $xetable.analyColumnWidth()
-        $xetable.recalculate(true)
-        DomTools.removeClass($xetable.$el, 'c--resize')
         $xetable.saveCustomResizable()
+        $xetable.recalculate(true).then(() => {
+          $xetable.updateCellAreas()
+        })
+        DomTools.removeClass($xetable.$el, 'drag--resize')
         $xetable.emitEvent('resizable-change', params, evnt)
       }
       updateEvent(evnt)

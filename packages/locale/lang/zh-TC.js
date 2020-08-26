@@ -2,18 +2,19 @@ export default {
   vxe: {
     error: {
       groupFixed: '如果使用分組表頭，固定列必須按組設定',
-      groupMouseRange: '分组表頭与 "{{0}}" 不能同時使用，这可能會出現錯誤',
+      groupMouseRange: '分组表頭與 "{{0}}" 不能同時使用，這可能會出現錯誤',
       scrollErrProp: '啟用虛擬滾動後不支持該參數 "{{0}}"',
       scrollXNotGroup: '橫向虛擬滾動不支持分組表頭，請修改正確 "scroll-x.gt" 的參數，否則可能會導致出現錯誤',
       errConflicts: '參數 "{{0}}" 與 "{{1}}" 有衝突',
       unableInsert: '無法插入到指定位置，請檢查參數是否正確',
-      useErr: '安裝 "{{0}}" 模塊時發生錯誤，可能順序不正確，依賴的模塊需要在Table之前安裝',
+      useErr: '安裝 "{{0}}" 模組時發生錯誤，可能順序不正確，依賴的模組需要在Table之前安裝',
       barUnableLink: '工具欄無法關聯表格',
       expandContent: '展開行的插槽應該是 “content”，請檢查是否正確',
-      reqModule: '缺少 "{{0}}" 模塊',
+      reqModule: '缺少 "{{0}}" 模組',
       reqProp: '缺少必要的 "{{0}}" 參數，可能會導致出現錯誤',
       emptyProp: '參數 "{{0}}" 不允許為空',
       errProp: '不支持的參數 "{{0}}"，可能為 "{{1}}"',
+      fieldRepet: '列欄位 "{{0}}" 重複了，這可能會導致某些功能無法使用',
       notFunc: '方法 "{{0}}" 不存在',
       notSlot: '插槽 "{{0}}" 不存在',
       noTree: '樹狀結構不支援 {{0}}',
@@ -25,7 +26,50 @@ export default {
       notType: '不支持的檔案類型 "{{0}}"',
       notExp: '該瀏覽器不支持導入/匯出功能',
       impFields: '導入失敗，請檢查欄位名和數據格式是否正確',
-      treeNotImp: '樹錶不支持導入'
+      treeNotImp: '樹狀表格不支持導入'
+    },
+    renderer: {
+      search: '蒐索',
+      cases: {
+        equal: '等於',
+        unequal: '不等於',
+        gt: '大於',
+        ge: '大於或等於',
+        lt: '小於',
+        le: '小於或等於',
+        begin: '開頭是',
+        notbegin: '開頭不是',
+        endin: '結尾是',
+        notendin: '結尾不是',
+        include: '包含',
+        exclude: '不包含',
+        between: '介於',
+        custom: '自定義篩選',
+        insensitive: '不區分大小寫'
+      },
+      combination: {
+        menus: {
+          sortAsc: '昇冪',
+          sortDesc: '降序',
+          fixedColumn: '鎖定列',
+          fixedGroup: '鎖定組',
+          cancelFixed: '取消鎖定',
+          fixedLeft: '鎖定左側',
+          fixedRight: '鎖定右側',
+          clearFilter: '清除篩選',
+          textOption: '文字篩選',
+          numberOption: '數值篩選'
+        },
+        popup: {
+          title: '自定義篩選的管道',
+          currColumnTitle: '當前列：',
+          and: '與',
+          or: '或',
+          describeHtml: '用 ? 代表單個字元<br/>用 * 代表任意多個字元'
+        },
+        empty: '(空白)',
+        notData: '無匹配項'
+      }
     },
     table: {
       emptyText: '暫無資料',
@@ -34,17 +78,17 @@ export default {
       confirmFilter: '篩選',
       resetFilter: '重置',
       allFilter: '全部',
-      sortAsc: '昇冪：最低到最高',
-      sortDesc: '按高到低進行排序',
+      sortAsc: '按低到高排序',
+      sortDesc: '按高到低排序',
       filter: '對所選的列啟用篩選',
       impSuccess: '成功導入 {{0}} 條記錄',
       expLoading: '正在匯出中',
       expSuccess: '匯出成功',
       expOriginFilename: '匯出_{{0}}',
-      expSrcFilename: '匯出_據_{{0}}',
+      expSrcFilename: '匯出_從_{{0}}',
       customTitle: '列設定',
       customAll: '全部',
-      customConfirm: '确认',
+      customConfirm: '確認',
       customRestore: '還原'
     },
     grid: {
@@ -88,8 +132,8 @@ export default {
     export: {
       types: {
         csv: 'CSV (逗号分隔)(*.csv)',
-        html: '网页(*.html)',
-        xml: 'XML 数据(*.xml)',
+        html: '網頁(*.html)',
+        xml: 'XML 文件(*.xml)',
         txt: '文本文件(制表符分隔)(*.txt)',
         xlsx: 'Excel 工作簿(*.xlsx)',
         pdf: 'PDF (*.pdf)'
@@ -131,12 +175,12 @@ export default {
       import: '導入',
       export: '匯出',
       print: '列印',
-      refresh: '重繪',
-      zoomIn: '全屏',
+      refresh: '刷新',
+      zoomIn: '全螢幕',
       zoomOut: '還原',
       custom: '列設定',
       customAll: '全部',
-      customConfirm: '确认',
+      customConfirm: '確認',
       customRestore: '還原'
     },
     input: {
