@@ -418,6 +418,7 @@ export default {
     initPages () {
       if (this.pagerConfig && this.pagerOpts.pageSize) {
         this.tablePage.pageSize = this.pagerOpts.pageSize
+        this.tablePage.currentPage = this.pagerOpts.currentPage
       }
     },
     initProxy () {
