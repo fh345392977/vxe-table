@@ -525,7 +525,8 @@ export default {
               if (defaultSort) {
                 sortParams = {
                   property: defaultSort.field,
-                  order: defaultSort.order
+                  order: defaultSort.order,
+                  sortBy: defaultSort.field,
                 }
               }
               this.sortData = params.sort = sortParams
