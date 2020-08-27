@@ -511,22 +511,24 @@ export default {
               params.page = tablePage
             }
             if (code === 'reload') {
-              // const defaultSort = $xetable.sortOpts.defaultSort
-              // let sortParams = {}
               if (pagerConfig) {
                 tablePage.currentPage = 1
               }
-              // // 如果使用默认排序
-              // if (defaultSort) {
-              //   sortParams = {
-              //     property: defaultSort.field,
-              //     order: defaultSort.order
-              //   }
-              // }
-              // this.sortData = params.sort = sortParams
               // this.filterData = params.filters = []
               // this.pendingRecords = []
               // this.clearAll()
+            }
+            if (code === 'init') {
+              const defaultSort = $xetable.sortOpts.defaultSort
+              let sortParams = {}
+              // 如果使用默认排序
+              if (defaultSort) {
+                sortParams = {
+                  property: defaultSort.field,
+                  order: defaultSort.order
+                }
+              }
+              this.sortData = params.sort = sortParams
             }
             const applyArgs = [params].concat(args)
             this.tableLoading = true
