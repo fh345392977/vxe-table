@@ -42,13 +42,13 @@ Latest ✔ | Latest ✔ | Latest ✔ | Latest ✔ | Latest ✔ |
 * [x] Striped
 * [x] Table with border
 * [x] Cell style
-* [x] Column resizable
+* [x] Column resizing
 * [x] Maximum table height
-* [x] Resize height and width
+* [x] Resize height & width
 * [x] Fixed column
 * [x] Grouping table header
 * [x] Table footer
-* [x] Highlight row and column
+* [x] Highlight row & column
 * [x] Table sequence
 * [x] Radio
 * [x] Checkbox
@@ -56,16 +56,15 @@ Latest ✔ | Latest ✔ | Latest ✔ | Latest ✔ | Latest ✔ |
 * [x] Switch
 * [x] Sorting
 * [x] Filter
-* [x] Rowspan and colspan
-* [x] Import
-* [x] Export
-* [x] Print
+* [x] Merged cells
+* [x] Merged footer items
+* [x] Import/Export/Print
 * [x] Show/Hide column
 * [x] Loading
 * [x] Formatted cell
-* [x] Slot/template
+* [x] Slot - template
 * [x] Context menu
-* [x] Expandable row
+* [x] Detail - Expandable row
 * [x] Pager
 * [x] Form
 * [x] Toolbar
@@ -78,9 +77,11 @@ Latest ✔ | Latest ✔ | Latest ✔ | Latest ✔ | Latest ✔ |
 * [x] Keyboard navigation
 * [x] Modal
 * [x] Renderer
-* [x] Virtual Scroller
+* [x] Virtual scroller
+* [x] Virtual merger
 * [x] (pro) Cell area selection
-* [x] (pro) Cell copy/paste
+* [x] (pro) Cell copy & paste
+* [x] (pro) Cell find and replace
 
 ## Modules
 
@@ -122,7 +123,7 @@ Latest ✔ | Latest ✔ | Latest ✔ | Latest ✔ | Latest ✔ |
 
 ## Installing
 
-Dependent: [vue](https://www.npmjs.com/package/vue) 2.6+, [xe-utils](https://www.npmjs.com/package/xe-utils) 2.6+
+Dependent: [vue](https://www.npmjs.com/package/vue) 2.6+, [xe-utils](https://www.npmjs.com/package/xe-utils) 2.7+
 
 ```shell
 npm install xe-utils vxe-table

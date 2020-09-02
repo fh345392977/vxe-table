@@ -14,10 +14,11 @@ export default {
       reqProp: '缺少必要的 "{{0}}" 参数，这可能会导致出现错误',
       emptyProp: '参数 "{{0}}" 不允许为空',
       errProp: '不支持的参数 "{{0}}"，可能为 "{{1}}"',
-      fieldRepet: '列字段 "{{0}}" 重复了，这可能会导致某些功能无法使用',
+      fieldRepet: 'column.{{0}}="{{1}}" 重复了，这可能会导致某些功能无法使用',
       notFunc: '方法 "{{0}}" 不存在',
       notSlot: '插槽 "{{0}}" 不存在',
       noTree: '树结构不支持 "{{0}}"',
+      notProp: '不支持的参数 "{{0}}"',
       delFunc: '方法 "{{0}}" 已废弃，请使用 "{{1}}"',
       delProp: '参数 "{{0}}" 已废弃，请使用 "{{1}}"',
       delEvent: '事件 "{{0}}" 已废弃，请使用 "{{1}}"',
@@ -69,6 +70,40 @@ export default {
         },
         empty: '(空白)',
         notData: '无匹配项'
+      }
+    },
+    pro: {
+      area: {
+        mergeErr: '无法对合并单元格进行该操作',
+        multiErr: '无法对多重选择区域进行该操作',
+        extendErr: '如果延伸的区域包含被合并的单元格，所有合并的单元格需大小相同'
+      },
+      fnr: {
+        title: '查找和替换',
+        findLabel: '查找',
+        replaceLabel: '替换',
+        findTitle: '查找内容：',
+        replaceTitle: '替换为：',
+        tabs: {
+          find: '查找',
+          replace: '替换'
+        },
+        btns: {
+          findNext: '查找下一个',
+          findAll: '查找全部',
+          replace: '替换',
+          replaceAll: '替换全部',
+          cancel: '取消'
+        },
+        header: {
+          seq: '#',
+          cell: '单元格',
+          value: '值'
+        },
+        empty: '(空值)',
+        recordCount: '已找到 {{0}} 个单元格',
+        notCell: '找不到匹配的单元格',
+        replaceSuccess: '成功替换 {{0}} 个单元格'
       }
     },
     table: {

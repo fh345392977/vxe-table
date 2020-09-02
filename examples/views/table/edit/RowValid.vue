@@ -2,7 +2,7 @@
   <div>
     <p class="tip">
       通过调用 <table-api-link prop="validate"/> 函数校验数据，<table-api-link prop="edit-rules"/> 校验规则配置，如果第一个参数为 true 则全量校验<br>
-      <span class="red">（不指定数据的情况下，默认只校验状态发生变动的数据，例如：新增、修改...等）</span>
+      <span class="red">（如果不指定数据，则默认只校验临时变动的数据，例如新增或修改...等）</span>
     </p>
 
     <vxe-toolbar>
@@ -51,17 +51,9 @@ import hljs from 'highlight.js'
 export default {
   data () {
     const nameValid = ({ cellValue }) => {
-      return new Promise((resolve, reject) => {
-        if (cellValue) {
-          if (!/^\w+$/.test(cellValue)) {
-            reject(new Error('名称格式不正确，必须字母或数字'))
-          } else {
-            resolve()
-          }
-        } else {
-          resolve()
-        }
-      })
+      if (cellValue && !/^\w+$/.test(cellValue)) {
+        return new Error('名称格式不正确，必须字母或数字')
+      }
     }
     return {
       tableData: [],
@@ -113,17 +105,9 @@ export default {
         export default {
           data () {
             const nameValid = ({ cellValue }) => {
-              return new Promise((resolve, reject) => {
-                if (cellValue) {
-                  if (!/^\\w+$/.test(cellValue)) {
-                    reject(new Error('名称格式不正确，必须字母或数字'))
-                  } else {
-                    resolve()
-                  }
-                } else {
-                  resolve()
-                }
-              })
+              if (cellValue && !/^\\w+$/.test(cellValue)) {
+                return new Error('名称格式不正确，必须字母或数字')
+              }
             }
             return {
               tableData: [],

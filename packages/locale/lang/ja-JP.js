@@ -14,10 +14,11 @@ export default {
       reqProp: '必要な "{{0}}" パラメーターが欠落しているため、エラーが発生する可能性があります',
       emptyProp: '"{{0}}" propertyはemptyが許可されていません',
       errProp: 'サポートされていないパラメーター "{{0}}"，"{{1}}" の可能性があります',
-      fieldRepet: '列フィールド "{{0}}" が重複しているため、機能が使えなくなることがあります。',
+      fieldRepet: 'column.{{0}}="{{0}}" が重複しているため、機能が使えなくなることがあります。',
       notFunc: 'method "{{0}}" はありません',
       notSlot: 'slot "{{0}}" はありません',
       noTree: 'Tree structureは "{{0}}" をサポートしていません',
+      notProp: 'サポートされていないパラメータ "{{0}}"',
       delFunc: '"{{0}}" functionは非推奨です、"{{1}}"を使用してください',
       delProp: '"{{0}}" propertyは非推奨です、"{{1}}"を使用してください',
       delEvent: 'イベント "{{0}}" は廃止されました。 "{{1}}" を使用してください',
@@ -69,6 +70,40 @@ export default {
         },
         empty: '(空白)',
         notData: '无匹配项'
+      }
+    },
+    pro: {
+      area: {
+        mergeErr: '无法对合并单元格进行该操作',
+        multiErr: '无法对多重选择区域进行该操作',
+        extendErr: '如果延伸的区域包含被合并的单元格，所有合并的单元格需大小相同'
+      },
+      fnr: {
+        title: '查找和替换',
+        findLabel: '查找',
+        replaceLabel: '替换',
+        findTitle: '查找内容：',
+        replaceTitle: '替换为：',
+        tabs: {
+          find: '查找',
+          replace: '替换'
+        },
+        btns: {
+          findNext: '查找下一个',
+          findAll: '查找全部',
+          replace: '替换',
+          replaceAll: '替换全部',
+          cancel: '取消'
+        },
+        header: {
+          seq: '#',
+          cell: '单元格',
+          value: '值'
+        },
+        empty: '(空值)',
+        recordCount: '已找到 {{0}} 个单元格',
+        notCell: '找不到匹配的单元格',
+        replaceSuccess: '成功替换 {{0}} 个单元格'
       }
     },
     table: {

@@ -399,17 +399,20 @@ export default {
       })
     },
     initPages () {
-      if (this.pagerConfig && this.pagerOpts.pageSize) {
-        this.tablePage.pageSize = this.pagerOpts.pageSize
+      const { tablePage, pagerConfig, pagerOpts } = this
+      const { currentPage, pageSize } = pagerOpts
+      if (pagerConfig) {
+        if (currentPage) {
+          tablePage.currentPage = currentPage
+        }
+        if (pageSize) {
+          tablePage.pageSize = pageSize
+        }
       }
     },
     initProxy () {
       const { proxyInited, proxyConfig, proxyOpts, formConfig, formOpts } = this
       if (proxyConfig) {
-        if (!proxyInited && proxyOpts.autoLoad !== false) {
-          this.proxyInited = true
-          this.$nextTick(() => this.commitProxy('reload'))
-        }
         if (formConfig && proxyOpts.form && formOpts.items) {
           const formData = {}
           formOpts.items.forEach(({ field, itemRender }) => {
@@ -418,6 +421,10 @@ export default {
             }
           })
           this.formData = formData
+        }
+        if (!proxyInited && proxyOpts.autoLoad !== false) {
+          this.proxyInited = true
+          this.$nextTick(() => this.commitProxy('init'))
         }
       }
     },
@@ -472,8 +479,11 @@ export default {
         case 'reset_custom':
           this.resetColumn(true)
           break
+        case 'init':
         case 'reload':
         case 'query': {
+          const isInited = code === 'init'
+          const isReload = code === 'reload'
           const ajaxMethods = ajax.query
           if (ajaxMethods) {
             const params = {
@@ -486,14 +496,14 @@ export default {
               options: ajaxMethods
             }
             if (pagerConfig) {
-              params.page = tablePage
-            }
-            if (code === 'reload') {
-              const defaultSort = $xetable.sortOpts.defaultSort
-              let sortParams = {}
-              if (pagerConfig) {
+              if (isReload) {
                 tablePage.currentPage = 1
               }
+              params.page = tablePage
+            }
+            if (isInited || isReload) {
+              const defaultSort = $xetable.sortOpts.defaultSort
+              let sortParams = {}
               // 如果使用默认排序
               if (defaultSort) {
                 sortParams = {
@@ -751,7 +761,7 @@ export default {
       this.$emit('form-submit-invalid', Object.assign({ $grid: this }, params))
     },
     togglCollapseEvent (params) {
-      this.recalculate(true)
+      this.$nextTick(() => this.recalculate(true))
       this.$emit('form-toggle-collapse', Object.assign({ $grid: this }, params))
     },
     triggerZoomEvent (evnt) {

@@ -114,38 +114,28 @@ function computeVirtualY (_vm) {
     if (!rowHeight) {
       rowHeight = rowHeightMaps[vSize || 'default']
     }
+    rowHeight = Math.max(48, rowHeight)
     const visibleSize = Math.max(8, Math.ceil(tableBodyElem.clientHeight / rowHeight) + 2)
     return { rowHeight, visibleSize }
   }
   return { rowHeight: 0, visibleSize: 8 }
 }
 
-function handleMergerXOffserIndex (list, offsetItem) {
-  const { startIndex, endIndex } = offsetItem
+function calculateMergerOffserIndex (list, offsetItem, type) {
   for (let mcIndex = 0, len = list.length; mcIndex < len; mcIndex++) {
     const mergeItem = list[mcIndex]
-    const { col: mergeColIndex, colspan: mergeColspan } = mergeItem
-    const mergeEndColIndex = mergeColIndex + mergeColspan
-    if (mergeColIndex < startIndex && startIndex <= mergeEndColIndex) {
-      offsetItem.startIndex = mergeColIndex
+    const { startIndex, endIndex } = offsetItem
+    const mergeStartIndex = mergeItem[type]
+    const mergeSpanNumber = mergeItem[type + 'span']
+    const mergeEndIndex = mergeStartIndex + mergeSpanNumber
+    if (mergeStartIndex < startIndex && startIndex < mergeEndIndex) {
+      offsetItem.startIndex = mergeStartIndex
     }
-    if (mergeColIndex < endIndex && endIndex <= mergeEndColIndex) {
-      offsetItem.endIndex = mergeEndColIndex
+    if (mergeStartIndex < endIndex && endIndex < mergeEndIndex) {
+      offsetItem.endIndex = mergeEndIndex
     }
-  }
-}
-
-function handleMergerYOffserIndex (list, offsetItem) {
-  const { startIndex, endIndex } = offsetItem
-  for (let mcIndex = 0, len = list.length; mcIndex < len; mcIndex++) {
-    const mergeItem = list[mcIndex]
-    const { row: mergeRowIndex, rowspan: mergeRowspan } = mergeItem
-    const mergeEndRowIndex = mergeRowIndex + mergeRowspan
-    if (mergeRowIndex < startIndex && startIndex <= mergeEndRowIndex) {
-      offsetItem.startIndex = mergeRowIndex
-    }
-    if (mergeRowIndex < endIndex && endIndex <= mergeEndRowIndex) {
-      offsetItem.endIndex = mergeEndRowIndex
+    if (offsetItem.startIndex !== startIndex || offsetItem.endIndex !== endIndex) {
+      mcIndex = -1
     }
   }
 }
@@ -341,10 +331,9 @@ const Methods = {
       if (scrollYLoad) {
         scrollYStore.endIndex = scrollYStore.visibleSize
       }
-      this.isLoadData = true
       this.handleReserveStatus()
       this.checkSelectionStatus()
-      return this.$nextTick().then(this.recalculate).then(this.refreshScroll)
+      return this.$nextTick().then(() => this.recalculate()).then(() => this.refreshScroll())
     })
   },
   /**
@@ -529,7 +518,7 @@ const Methods = {
       const rest = { column, colid, index, items, parent }
       if (property) {
         if (fullColumnFieldData[property]) {
-          UtilTools.warn('vxe.error.fieldRepet', [property])
+          UtilTools.warn('vxe.error.fieldRepet', ['field', property])
         }
         fullColumnFieldData[property] = rest
       }
@@ -540,6 +529,9 @@ const Methods = {
         treeNodeColumn = column
       } else if (!expandColumn && type === 'expand') {
         expandColumn = column
+      }
+      if (fullColumnIdData[colid]) {
+        UtilTools.error('vxe.error.fieldRepet', ['colId', colid])
       }
       fullColumnIdData[colid] = rest
       fullColumnMap.set(column, rest)
@@ -1701,7 +1693,7 @@ const Methods = {
   handleGlobalMousedownEvent (evnt) {
     const { $el, $refs, mouseConfig, editStore, ctxMenuStore, editOpts, filterStore, getRowNode } = this
     const { actived } = editStore
-    const { filterWrapper, validTip } = $refs
+    const { ctxWrapper, filterWrapper, validTip } = $refs
     if (filterWrapper) {
       if (getEventTargetNode(evnt, $el, 'vxe-cell--filter').flag) {
         // 如果点击了筛选按钮
@@ -1759,7 +1751,7 @@ const Methods = {
         }
       }
     } else if (mouseConfig) {
-      if (!getEventTargetNode(evnt, $el).flag && !getEventTargetNode(evnt, $refs.tableWrapper).flag) {
+      if (!getEventTargetNode(evnt, $el).flag && (ctxWrapper && !getEventTargetNode(evnt, ctxWrapper.$el).flag)) {
         this.clearSelected()
         if (!getEventTargetNode(evnt, document.body, 'vxe-table--ignore-areas-clear').flag) {
           this.preventEvent(evnt, 'event.clearAreas', {}, () => {
@@ -1770,7 +1762,7 @@ const Methods = {
       }
     }
     // 如果配置了快捷菜单且，点击了其他地方则关闭
-    if (ctxMenuStore.visible && this.$refs.ctxWrapper && !getEventTargetNode(evnt, this.$refs.ctxWrapper.$el).flag) {
+    if (ctxMenuStore.visible && ctxWrapper && !getEventTargetNode(evnt, ctxWrapper.$el).flag) {
       this.closeMenu()
     }
     // 最后激活的表格
@@ -1797,7 +1789,7 @@ const Methods = {
     // 该行为只对当前激活的表格有效
     if (this.isActivated) {
       this.preventEvent(evnt, 'event.keydown', null, () => {
-        const { isCtxMenu, ctxMenuStore, editStore, editOpts, mouseConfig = {}, keyboardConfig = {}, treeConfig, treeOpts, highlightCurrentRow, currentRow } = this
+        const { isCtxMenu, ctxMenuStore, editStore, editOpts, mouseConfig = {}, keyboardConfig = {}, treeConfig, treeOpts, highlightCurrentRow, currentRow, bodyCtxMenu } = this
         const { selected, actived } = editStore
         const keyCode = evnt.keyCode
         const isBack = keyCode === 8
@@ -1811,6 +1803,7 @@ const Methods = {
         const isDwArrow = keyCode === 40
         const isDel = keyCode === 46
         const isF2 = keyCode === 113
+        const isContextMenu = keyCode === 93
         const isCtrlKey = evnt.ctrlKey
         const isShiftKey = evnt.shiftKey
         const isAltKey = evnt.altKey
@@ -1854,6 +1847,13 @@ const Methods = {
             evnt.preventDefault()
             this.handleActived(selected.args, evnt)
           }
+        } else if (isContextMenu) {
+          // 如果按下上下文键
+          this._keyCtx = selected.row && selected.column && bodyCtxMenu.length
+          clearTimeout(this.keyCtxTimeout)
+          this.keyCtxTimeout = setTimeout(() => {
+            this._keyCtx = false
+          }, 1000)
         } else if (isEnter && !isAltKey && keyboardConfig.isEnter && (selected.row || actived.row || (treeConfig && highlightCurrentRow && currentRow))) {
           // 退出选中
           if (isCtrlKey) {
@@ -1870,9 +1870,17 @@ const Methods = {
             // 如果是激活状态，退则出到上一行/下一行
             if (selected.row || actived.row) {
               if (isShiftKey) {
-                this.moveSelected(selected.row ? selected.args : actived.args, isLeftArrow, true, isRightArrow, false, evnt)
+                if (keyboardConfig.enterToTab) {
+                  this.moveTabSelected(selected.args, isShiftKey, evnt)
+                } else {
+                  this.moveSelected(selected.row ? selected.args : actived.args, isLeftArrow, true, isRightArrow, false, evnt)
+                }
               } else {
-                this.moveSelected(selected.row ? selected.args : actived.args, isLeftArrow, false, isRightArrow, true, evnt)
+                if (keyboardConfig.enterToTab) {
+                  this.moveTabSelected(selected.args, isShiftKey, evnt)
+                } else {
+                  this.moveSelected(selected.row ? selected.args : actived.args, isLeftArrow, false, isRightArrow, true, evnt)
+                }
               }
             } else if (treeConfig && highlightCurrentRow && currentRow) {
               // 如果是树形表格当前行回车移动到子节点
@@ -1940,24 +1948,27 @@ const Methods = {
     }
   },
   handleGlobalPasteEvent (evnt) {
-    const { isActivated, keyboardConfig, mouseConfig, mouseOpts } = this
-    if (isActivated) {
+    const { isActivated, keyboardConfig, mouseConfig, mouseOpts, editStore } = this
+    const { actived } = editStore
+    if (isActivated && !(actived.row || actived.column)) {
       if (keyboardConfig && keyboardConfig.isClip && mouseConfig && mouseOpts.area && this.handlePasteCellAreaEvent) {
         this.handlePasteCellAreaEvent(evnt)
       }
     }
   },
   handleGlobalCopyEvent (evnt) {
-    const { isActivated, keyboardConfig, mouseConfig, mouseOpts } = this
-    if (isActivated) {
+    const { isActivated, keyboardConfig, mouseConfig, mouseOpts, editStore } = this
+    const { actived } = editStore
+    if (isActivated && !(actived.row || actived.column)) {
       if (keyboardConfig && keyboardConfig.isClip && mouseConfig && mouseOpts.area && this.handleCopyCellAreaEvent) {
         this.handleCopyCellAreaEvent(evnt)
       }
     }
   },
   handleGlobalCutEvent (evnt) {
-    const { isActivated, keyboardConfig, mouseConfig, mouseOpts } = this
-    if (isActivated) {
+    const { isActivated, keyboardConfig, mouseConfig, mouseOpts, editStore } = this
+    const { actived } = editStore
+    if (isActivated && !(actived.row || actived.column)) {
       if (keyboardConfig && keyboardConfig.isClip && mouseConfig && mouseOpts.area && this.handleCutCellAreaEvent) {
         this.handleCutCellAreaEvent(evnt)
       }
@@ -3312,16 +3323,16 @@ const Methods = {
     const { mergeList, mergeFooterList, scrollXStore } = this
     const { startIndex, endIndex, offsetSize } = scrollXStore
     const { toVisibleIndex, visibleSize } = computeVirtualX(this)
+    const offsetItem = {
+      startIndex: Math.max(0, toVisibleIndex - 1 - offsetSize),
+      endIndex: toVisibleIndex + visibleSize + offsetSize
+    }
+    calculateMergerOffserIndex(mergeList.concat(mergeFooterList), offsetItem, 'col')
+    const { startIndex: offsetStartIndex, endIndex: offsetEndIndex } = offsetItem
     if (toVisibleIndex <= startIndex || toVisibleIndex >= endIndex - visibleSize - 1) {
-      const offsetItem = {
-        startIndex: Math.max(0, toVisibleIndex - 1 - offsetSize),
-        endIndex: toVisibleIndex + visibleSize + offsetSize
-      }
-      handleMergerXOffserIndex(mergeList.concat(mergeFooterList), offsetItem)
-      const { startIndex: offsetStartIndex, endIndex: offsetEndIndex } = offsetItem
-      scrollXStore.startIndex = offsetStartIndex
-      scrollXStore.endIndex = offsetEndIndex
       if (startIndex !== offsetStartIndex || endIndex !== offsetEndIndex) {
+        scrollXStore.startIndex = offsetStartIndex
+        scrollXStore.endIndex = offsetEndIndex
         this.updateScrollXData()
       }
     }
@@ -3350,16 +3361,16 @@ const Methods = {
     const scrollBodyElem = evnt.target
     const scrollTop = scrollBodyElem.scrollTop
     const toVisibleIndex = Math.floor(scrollTop / rowHeight)
+    const offsetItem = {
+      startIndex: Math.max(0, toVisibleIndex - 1 - offsetSize),
+      endIndex: toVisibleIndex + visibleSize + offsetSize
+    }
+    calculateMergerOffserIndex(mergeList, offsetItem, 'row')
+    const { startIndex: offsetStartIndex, endIndex: offsetEndIndex } = offsetItem
     if (toVisibleIndex <= startIndex || toVisibleIndex >= endIndex - visibleSize - 1) {
-      const offsetItem = {
-        startIndex: Math.max(0, toVisibleIndex - 1 - offsetSize),
-        endIndex: toVisibleIndex + visibleSize + offsetSize
-      }
-      handleMergerYOffserIndex(mergeList, offsetItem)
-      const { startIndex: offsetStartIndex, endIndex: offsetEndIndex } = offsetItem
-      scrollYStore.startIndex = offsetStartIndex
-      scrollYStore.endIndex = offsetEndIndex
       if (startIndex !== offsetStartIndex || endIndex !== offsetEndIndex) {
+        scrollYStore.startIndex = offsetStartIndex
+        scrollYStore.endIndex = offsetEndIndex
         this.updateScrollYData()
       }
     }
@@ -3370,17 +3381,21 @@ const Methods = {
       const { sYOpts, sXOpts, scrollXLoad, scrollYLoad, scrollXStore, scrollYStore } = this
       // 计算 X 逻辑
       if (scrollXLoad) {
-        scrollXStore.offsetSize = sXOpts.oSize ? XEUtils.toNumber(sXOpts.oSize) : browse.msie ? 10 : (browse.edge ? 5 : 0)
+        const offsetXSize = sXOpts.oSize ? XEUtils.toNumber(sXOpts.oSize) : browse.msie ? 10 : (browse.edge ? 5 : 0)
+        scrollXStore.offsetSize = offsetXSize
+        scrollXStore.endIndex = Math.max(scrollXStore.startIndex + scrollXStore.visibleSize + offsetXSize, scrollXStore.endIndex)
         this.updateScrollXData()
       } else {
         this.updateScrollXSpace()
       }
       // 计算 Y 逻辑
-      const { rowHeight, visibleSize } = computeVirtualY(this)
+      const { rowHeight, visibleSize: visibleYSize } = computeVirtualY(this)
+      scrollYStore.rowHeight = rowHeight
       if (scrollYLoad) {
-        scrollYStore.offsetSize = sYOpts.oSize ? XEUtils.toNumber(sYOpts.oSize) : browse.msie ? 20 : (browse.edge ? 10 : 0)
-        scrollYStore.visibleSize = visibleSize
-        scrollYStore.rowHeight = rowHeight
+        const offsetYSize = sYOpts.oSize ? XEUtils.toNumber(sYOpts.oSize) : browse.msie ? 20 : (browse.edge ? 10 : 0)
+        scrollYStore.offsetSize = offsetYSize
+        scrollYStore.visibleSize = visibleYSize
+        scrollYStore.endIndex = Math.max(scrollYStore.startIndex + visibleYSize + offsetYSize, scrollYStore.endIndex)
         this.updateScrollYData()
       } else {
         this.updateScrollYSpace()
@@ -3578,7 +3593,7 @@ const Methods = {
         const { row, column } = scope
         const type = 'change'
         if (this.hasCellRules(type, row, column)) {
-          const cell = this.getCell(column, row)
+          const cell = this.getCell(row, column)
           if (cell) {
             return this.validCellRules(type, row, column, cellValue)
               .then(() => {
@@ -3606,6 +3621,9 @@ const Methods = {
    * @param {MergeOptions[]} merges { row: Row|number, column: ColumnInfo|number, rowspan: number, colspan: number }
    */
   setMergeCells (merges) {
+    if (this.spanMethod) {
+      UtilTools.error('vxe.error.errConflicts', ['merge-cells', 'span-method'])
+    }
     setMerges(this, merges, this.mergeList, this.afterFullData)
     return this.$nextTick().then(() => this.updateCellAreas())
   },
@@ -3614,6 +3632,9 @@ const Methods = {
    * @param {MergeOptions[]} merges 多个或数组 [{row:Row|number, col:ColumnInfo|number}]
    */
   removeMergeCells (merges) {
+    if (this.spanMethod) {
+      UtilTools.error('vxe.error.errConflicts', ['merge-cells', 'span-method'])
+    }
     const rest = removeMerges(this, merges, this.mergeList, this.afterFullData)
     return this.$nextTick().then(() => {
       this.updateCellAreas()
@@ -3637,10 +3658,16 @@ const Methods = {
     this.setMergeFooterItems(this.mergeFooterItems)
   },
   setMergeFooterItems (merges) {
+    if (this.footerSpanMethod) {
+      UtilTools.error('vxe.error.errConflicts', ['merge-footer-items', 'footer-span-method'])
+    }
     setMerges(this, merges, this.mergeFooterList, null)
     return this.$nextTick().then(() => this.updateCellAreas())
   },
   removeMergeFooterItems (merges) {
+    if (this.footerSpanMethod) {
+      UtilTools.error('vxe.error.errConflicts', ['merge-footer-items', 'footer-span-method'])
+    }
     const rest = removeMerges(this, merges, this.mergeFooterList, null)
     return this.$nextTick().then(() => {
       this.updateCellAreas()
@@ -3668,9 +3695,11 @@ const Methods = {
     }
   },
   updateCellAreas () {
-    if (this.mouseConfig && this.mouseOpts.area && this.handleUpdateCellAreas) {
-      this.handleUpdateCellAreas()
-    }
+    this.recalculate().then(() => this.refreshScroll()).then(() => {
+      if (this.mouseConfig && this.mouseOpts.area && this.handleUpdateCellAreas) {
+        this.handleUpdateCellAreas()
+      }
+    })
   },
   emitEvent (type, params, evnt) {
     this.$emit(type, Object.assign({ $table: this, $grid: this.$xegrid, $event: evnt }, params))
@@ -3687,7 +3716,7 @@ const Methods = {
   /*************************
    * Publish methods
    *************************/
-  getCell (column, row) {
+  getCell (row, column) {
     const { $refs } = this
     const rowid = getRowid(this, row)
     const bodyElem = $refs[`${column.fixed || 'table'}Body`] || $refs.tableBody
@@ -3711,7 +3740,7 @@ const Methods = {
 }
 
 // Module methods
-const funcs = 'setFilter,clearFilter,closeMenu,setActiveCellArea,getActiveCellArea,getCellAreas,toCellAreaText,clearCellAreas,copyCellArea,cutCellArea,pasteCellArea,getCopyCellArea,clearCopyCellArea,setCellAreas,getSelectedCell,clearSelected,insert,insertAt,remove,removeCheckboxRow,removeRadioRow,removeCurrentRow,getRecordset,getInsertRecords,getRemoveRecords,getUpdateRecords,clearActived,getActiveRecord,isActiveByRow,setActiveRow,setActiveCell,setSelectCell,clearValidate,fullValidate,validate,openExport,exportData,openImport,importData,readFile,importByFile,print,openCustom'.split(',')
+const funcs = 'setFilter,clearFilter,closeMenu,setActiveCellArea,getActiveCellArea,getCellAreas,clearCellAreas,copyCellArea,cutCellArea,pasteCellArea,getCopyCellArea,clearCopyCellArea,setCellAreas,openFind,openReplace,getSelectedCell,clearSelected,insert,insertAt,remove,removeCheckboxRow,removeRadioRow,removeCurrentRow,getRecordset,getInsertRecords,getRemoveRecords,getUpdateRecords,clearActived,getActiveRecord,isActiveByRow,setActiveRow,setActiveCell,setSelectCell,clearValidate,fullValidate,validate,openExport,exportData,openImport,importData,readFile,importByFile,print,openCustom'.split(',')
 
 funcs.forEach(name => {
   Methods[name] = function (...args) {

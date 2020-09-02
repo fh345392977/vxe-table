@@ -48,7 +48,7 @@ Latest ✔ | Latest ✔ | Latest ✔ | Latest ✔ | Latest ✔ |
 * [x] 固定列
 * [x] 多級表頭
 * [x] 錶尾數據
-* [x] 高亮行、列
+* [x] 高亮行或列
 * [x] 序號
 * [x] 單選框
 * [x] 核取方塊
@@ -56,14 +56,13 @@ Latest ✔ | Latest ✔ | Latest ✔ | Latest ✔ | Latest ✔ |
 * [x] 開關
 * [x] 排序
 * [x] 篩選
-* [x] 合併行或列
-* [x] 導入
-* [x] 匯出
-* [x] 列印
+* [x] 儲存格合併
+* [x] 合併錶尾
+* [x] 導入/匯出/列印
 * [x] 顯示/隱藏列
 * [x] 加載中
 * [x] 格式化內容
-* [x] 自定義插槽/範本
+* [x] 自定義插槽 - 範本
 * [x] 快捷選單
 * [x] 展開行
 * [x] 分頁
@@ -79,8 +78,10 @@ Latest ✔ | Latest ✔ | Latest ✔ | Latest ✔ | Latest ✔ |
 * [x] 模態視窗
 * [x] 渲染器
 * [x] 虛擬滾動
+* [x] 虛擬合併
 * [x] (pro) 儲存格區域選取
 * [x] (pro) 儲存格複製/粘貼
+* [x] (pro) 儲存格查找和替換
 
 ## 模塊&組件
 
@@ -122,7 +123,7 @@ Latest ✔ | Latest ✔ | Latest ✔ | Latest ✔ | Latest ✔ |
 
 ## 安裝
 
-依賴庫：[vue](https://www.npmjs.com/package/vue) 2.6+, [xe-utils](https://www.npmjs.com/package/xe-utils) 2.6+
+依賴庫：[vue](https://www.npmjs.com/package/vue) 2.6+, [xe-utils](https://www.npmjs.com/package/xe-utils) 2.7+
 
 ```shell
 npm install xe-utils vxe-table

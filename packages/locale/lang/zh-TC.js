@@ -14,10 +14,11 @@ export default {
       reqProp: '缺少必要的 "{{0}}" 參數，可能會導致出現錯誤',
       emptyProp: '參數 "{{0}}" 不允許為空',
       errProp: '不支持的參數 "{{0}}"，可能為 "{{1}}"',
-      fieldRepet: '列欄位 "{{0}}" 重複了，這可能會導致某些功能無法使用',
+      fieldRepet: 'column.{{0}}="{{1}}" 重複了，這可能會導致某些功能無法使用',
       notFunc: '方法 "{{0}}" 不存在',
       notSlot: '插槽 "{{0}}" 不存在',
       noTree: '樹狀結構不支援 {{0}}',
+      notProp: '不支持的參數 "{{0}}"',
       delFunc: '方法 "{{0}}" 已停用，請使用 "{{1}}"',
       delProp: '參數 "{{0}}" 已停用，請使用 "{{1}}"',
       delEvent: '事件 "{{0}}" 已停用，請使用 "{{1}}"',
@@ -69,6 +70,40 @@ export default {
         },
         empty: '(空白)',
         notData: '無匹配項'
+      }
+    },
+    pro: {
+      area: {
+        mergeErr: '無法對合併儲存格進行該操作',
+        multiErr: '無法對多重選擇區域進行該操作',
+        extendErr: '如果延伸的區域包含被合併的儲存格，所有合併的儲存格需大小相同'
+      },
+      fnr: {
+        title: '查找和替換',
+        findLabel: '查找',
+        replaceLabel: '替換',
+        findTitle: '查找內容：',
+        replaceTitle: '替換為：',
+        tabs: {
+          find: '查找',
+          replace: '替換'
+        },
+        btns: {
+          findNext: '查找下一個',
+          findAll: '查找全部',
+          replace: '替换',
+          replaceAll: '替换全部',
+          cancel: '取消'
+        },
+        header: {
+          seq: '#',
+          cell: '儲存格',
+          value: '值'
+        },
+        empty: '(空值)',
+        recordCount: '已找到 {{0}} 個儲存格',
+        notCell: '找不到匹配的儲存格',
+        replaceSuccess: '成功替換 {{0}} 個儲存格'
       }
     },
     table: {

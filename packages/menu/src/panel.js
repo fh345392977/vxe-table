@@ -6,16 +6,22 @@ export default {
     ctxMenuStore: Object,
     ctxMenuOpts: Object
   },
+  mounted () {
+    document.body.appendChild(this.$el)
+  },
+  beforeDestroy () {
+    const { $el } = this
+    if ($el.parentNode) {
+      $el.parentNode.removeChild($el)
+    }
+  },
   render (h) {
     const $xetable = this.$parent
     const { _e, ctxMenuOpts, ctxMenuStore } = this
     return h('div', {
-      class: ['vxe-table--context-menu-wrapper', ctxMenuOpts.className, {
-        'is--show': ctxMenuStore.visible,
-        [`child-pos--${ctxMenuStore.childPos}`]: ctxMenuStore.childPos
-      }],
+      class: ['vxe-table--context-menu-wrapper', ctxMenuOpts.className],
       style: ctxMenuStore.style
-    }, ctxMenuStore.list.map((options, gIndex) => {
+    }, ctxMenuStore.visible ? ctxMenuStore.list.map((options, gIndex) => {
       return h('ul', {
         class: 'vxe-context-menu--option-wrapper',
         key: gIndex
@@ -89,6 +95,6 @@ export default {
           })) : _e()
         ])
       }))
-    }))
+    }) : [])
   }
 }

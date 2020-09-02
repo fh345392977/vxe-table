@@ -117,7 +117,8 @@
       "edit-render",
       "content-render",
       "tree-node",
-      "params"
+      "params",
+      "col-id"
     ],
     "description": "基础表格 - 列"
   },
@@ -420,6 +421,7 @@
       "title",
       "type",
       "status",
+      "class-name",
       "icon-status",
       "message",
       "cancel-button-text",
