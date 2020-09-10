@@ -16,6 +16,7 @@ class ColumnInfo {
     const proxyOpts = $xegrid ? $xegrid.proxyOpts : null
     const formatter = _vm.formatter
     const visible = XEUtils.isBoolean(_vm.visible) ? _vm.visible : true
+    const showInCustom = XEUtils.isBoolean(_vm.showInCustom) ? _vm.showInCustom : true
     if (_vm.cellRender && _vm.editRender) {
       UtilTools.warn('vxe.error.errConflicts', ['column.cell-render', 'column.edit-render'])
     }
@@ -88,7 +89,7 @@ class ColumnInfo {
       align: _vm.align,
       headerAlign: _vm.headerAlign,
       footerAlign: _vm.footerAlign,
-      showInCustom: _vm.showInCustom,
+      showInCustom,
       showOverflow: _vm.showOverflow,
       showHeaderOverflow: _vm.showHeaderOverflow,
       showFooterOverflow: _vm.showFooterOverflow,
