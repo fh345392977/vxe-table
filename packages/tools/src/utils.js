@@ -88,6 +88,7 @@ class ColumnInfo {
       align: _vm.align,
       headerAlign: _vm.headerAlign,
       footerAlign: _vm.footerAlign,
+      showInCustom: _vm.showInCustom,
       showOverflow: _vm.showOverflow,
       showHeaderOverflow: _vm.showHeaderOverflow,
       showFooterOverflow: _vm.showFooterOverflow,

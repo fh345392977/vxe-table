@@ -52,6 +52,10 @@ export declare class Column extends VXETableModule {
    */
   footerAlign?: string;
   /**
+   * 是否显示在Custom中
+   */
+  showInColumn?: boolean;
+  /**
    * 当内容过长时显示为省略号
    */
   showOverflow?: boolean | string;

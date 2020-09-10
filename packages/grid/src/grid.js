@@ -539,22 +539,21 @@ export default {
               params.page = tablePage
             }
             if (isInited || isReload) {
+              this.pendingRecords = []
+            }
+            if (isInited) {
               const defaultSort = $xetable.sortOpts.defaultSort
               let sortParams = {}
-              if (isReload) {
-                tablePage.currentPage = 1
-              }
               // 如果使用默认排序
               if (defaultSort) {
                 sortParams = {
                   property: defaultSort.field,
-                  order: defaultSort.order
+                  order: defaultSort.order,
+                  sortBy: defaultSort.field
                 }
               }
               this.sortData = params.sort = sortParams
               this.filterData = params.filters = []
-              this.pendingRecords = []
-              this.clearAll()
             }
             const applyArgs = [params].concat(args)
             this.tableLoading = true
