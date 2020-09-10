@@ -165,6 +165,7 @@ export default {
     rowKey: Boolean,
     rowId: { type: String, default: () => GlobalConfig.table.rowId },
     zIndex: Number,
+    emptyText: String,
     keepSource: { type: Boolean, default: () => GlobalConfig.table.keepSource },
     // 是否自动监听父容器变化去更新响应式表格宽高
     autoResize: { type: Boolean, default: () => GlobalConfig.table.autoResize },
@@ -334,7 +335,6 @@ export default {
         showChild: false,
         selectChild: null,
         list: [],
-        childPos: null,
         style: null
       },
       // 存放可编辑相关信息
@@ -522,11 +522,7 @@ export default {
       return Object.assign({}, GlobalConfig.table.expandConfig, this.expandConfig)
     },
     treeOpts () {
-      return Object.assign({
-        children: 'children',
-        hasChild: 'hasChild',
-        indent: 20
-      }, GlobalConfig.table.treeConfig, this.treeConfig)
+      return Object.assign({}, GlobalConfig.table.treeConfig, this.treeConfig)
     },
     emptyOpts () {
       return Object.assign({}, GlobalConfig.table.emptyRender, this.emptyRender)
@@ -743,6 +739,9 @@ export default {
     if (this.remoteFilter) {
       UtilTools.warn('vxe.error.delProp', ['remote-filter', 'filter-config.remote'])
     }
+    if (this.mouseOpts.area && !this.handleUpdateCellAreas) {
+      return UtilTools.error('vxe.error.notProp', ['mouse-config.area'])
+    }
     if (mouseOpts.checked && mouseOpts.area) {
       UtilTools.error('vxe.error.errProp', ['mouse-config.checked', 'mouse-config.area'])
     }
@@ -939,7 +938,7 @@ export default {
       if (compConf) {
         emptyContent = compConf.renderEmpty.call(this, h, emptyOpts, { $table: this }, { $table: this })
       } else {
-        emptyContent = GlobalConfig.i18n('vxe.table.emptyText')
+        emptyContent = this.emptyText || GlobalConfig.i18n('vxe.table.emptyText')
       }
     }
     return h('div', {

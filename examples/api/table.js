@@ -575,6 +575,7 @@ const apis = [
       },
       {
         name: 'highlight-cell',
+        abandoned: true,
         descKey: 'app.api.table.desc.highlightCell',
         version: '',
         type: 'Boolean',
@@ -638,6 +639,7 @@ const apis = [
       },
       {
         name: 'cell-style',
+        abandoned: true,
         descKey: 'app.api.table.desc.cellStyle',
         version: '2.6.19',
         type: 'Object, Function',
@@ -647,6 +649,7 @@ const apis = [
       },
       {
         name: 'header-cell-style',
+        abandoned: true,
         descKey: 'app.api.table.desc.headerCellStyle',
         version: '2.6.19',
         type: 'Object, Function',
@@ -656,6 +659,7 @@ const apis = [
       },
       {
         name: 'footer-cell-style',
+        abandoned: true,
         descKey: 'app.api.table.desc.footerCellStyle',
         version: '2.6.19',
         type: 'Object, Function',
@@ -665,6 +669,7 @@ const apis = [
       },
       {
         name: 'row-style',
+        abandoned: true,
         descKey: 'app.api.table.desc.rowStyle',
         version: '2.6.19',
         type: 'Object, Function',
@@ -674,6 +679,7 @@ const apis = [
       },
       {
         name: 'header-row-style',
+        abandoned: true,
         descKey: 'app.api.table.desc.headerRowStyle',
         version: '2.6.19',
         type: 'Object, Function',
@@ -683,6 +689,7 @@ const apis = [
       },
       {
         name: 'footer-row-style',
+        abandoned: true,
         descKey: 'app.api.table.desc.footerRowStyle',
         version: '2.6.19',
         type: 'Object, Function',
@@ -861,6 +868,7 @@ const apis = [
       },
       {
         name: 'z-index',
+        abandoned: true,
         descKey: 'app.api.table.desc.zIndex',
         version: '2.6.7',
         type: 'Number',
@@ -1724,7 +1732,7 @@ const apis = [
             enum: '',
             defVal: 'false',
             list: []
-          // },
+          },
           // {
           //   name: 'checked',
           //   desc: '开启单元格选取功能',
@@ -1734,14 +1742,23 @@ const apis = [
           //   defVal: 'false',
           //   list: []
           // },
-          // {
-          //   name: 'area',
-          //   desc: '如果功能被支持，则开启单元格区域选取功能，非连续的区域，按住 Ctrl 键，用鼠标逐一选取',
-          //   version: 'pro',
-          //   type: 'boolean',
-          //   enum: '',
-          //   defVal: 'false',
-          //   list: []
+          {
+            name: 'area',
+            desc: '如果功能被支持，则开启鼠标左键单元格区域选取功能，非连续的区域，同时按住 鼠标左键 + Ctrl 键，用鼠标逐一选取',
+            version: 'pro',
+            type: 'boolean',
+            enum: '',
+            defVal: 'false',
+            list: []
+          },
+          {
+            name: 'extension',
+            desc: '只对 area 启用后有效，是否开启区域延伸选取功能，开启后可以通过鼠标左键按住右下角延伸按钮，将区域横向或纵向扩大',
+            version: 'pro',
+            type: 'boolean',
+            enum: '',
+            defVal: 'true',
+            list: []
           }
         ]
       },
@@ -1807,24 +1824,42 @@ const apis = [
           //   defVal: 'false',
           //   list: []
           // },
-          // {
-          //   name: 'isClip',
-          //   desc: '用于 mouse-config.area，开启复制/剪贴/粘贴功能',
-          //   version: 'pro',
-          //   type: 'Boolean',
-          //   enum: '',
-          //   defVal: 'false',
-          //   list: []
-          // },
-          // {
-          //   name: 'isChecked',
-          //   desc: '用于 mouse-config.area & column.type=checkbox|radio，开启空格键切换复选框或单选框状态功能',
-          //   version: 'pro',
-          //   type: 'Boolean',
-          //   enum: '',
-          //   defVal: 'false',
-          //   list: []
-          // },
+          {
+            name: 'isMerge',
+            desc: '如果功能被支持，用于 mouse-config.area，开启合并和取消合并功能',
+            version: 'pro',
+            type: 'Boolean',
+            enum: '',
+            defVal: 'false',
+            list: []
+          },
+          {
+            name: 'isClip',
+            desc: '如果功能被支持，用于 mouse-config.area，开启复制/剪贴/粘贴功能',
+            version: 'pro',
+            type: 'Boolean',
+            enum: '',
+            defVal: 'false',
+            list: []
+          },
+          {
+            name: 'isFNR',
+            desc: '如果功能被支持，用于 mouse-config.area，开启查找和替换功能',
+            version: 'pro',
+            type: 'Boolean',
+            enum: '',
+            defVal: 'false',
+            list: []
+          },
+          {
+            name: 'isChecked',
+            desc: '如果功能被支持，用于 mouse-config.area & column.type=checkbox|radio，开启空格键切换复选框或单选框状态功能',
+            version: 'pro',
+            type: 'Boolean',
+            enum: '',
+            defVal: 'false',
+            list: []
+          },
           {
             name: 'enterToTab',
             desc: '是否将回车键行为改成 Tab 键行为',
@@ -1956,6 +1991,7 @@ const apis = [
           },
           {
             name: 'maxWidth',
+            abandoned: true,
             desc: '校验提示框的最大宽度（对于某些特殊场景可能会用到）',
             version: '',
             type: 'String, Number',
@@ -2047,6 +2083,7 @@ const apis = [
           },
           {
             name: 'maxWidth',
+            abandoned: true,
             desc: '提示框的最大宽度（对于某些特殊场景可能会用到）',
             version: '',
             type: 'Number',
@@ -2055,6 +2092,15 @@ const apis = [
             list: []
           }
         ]
+      },
+      {
+        name: 'empty-text',
+        descKey: 'app.api.table.desc.emptyText',
+        version: '2.9.20',
+        type: 'string',
+        enum: '',
+        defVal: '',
+        list: []
       },
       {
         name: 'empty-render',
@@ -2221,6 +2267,7 @@ const apis = [
       },
       {
         name: 'animat',
+        abandoned: true,
         desc: '表格动画效果开关（关闭后视觉效果更快）',
         version: '2.9.4',
         type: 'Object',
@@ -3256,7 +3303,7 @@ const apis = [
       },
       {
         name: 'getCheckboxIndeterminateRecords()',
-        desc: '用于 type=checkbox，获取半选状态的行数据',
+        desc: '用于 tree-config 和 type=checkbox，获取半选状态的行数据',
         version: '2.9',
         type: 'Array<Row>',
         enum: '',
@@ -3328,33 +3375,33 @@ const apis = [
       //   defVal: '',
       //   list: []
       // },
-      // {
-      //   name: 'getCellAreas()',
-      //   desc: '用于 mouse-config.area，用于获取鼠标选择的所有区域',
-      //   version: 'pro',
-      //   type: 'Array<{cols: ColumnConfig[], rows: any[]}>',
-      //   enum: '',
-      //   defVal: '',
-      //   list: []
-      // },
-      // {
-      //   name: 'getActiveCellArea()',
-      //   desc: '用于 mouse-config.area，用于获取区域中的活动单元格',
-      //   version: 'pro',
-      //   type: '{column: ColumnConfig, row: any}',
-      //   enum: '',
-      //   defVal: '',
-      //   list: []
-      // },
-      // {
-      //   name: 'getCopyCellArea()',
-      //   desc: '用于 mouse-config.area，用于获取被标记为复制状态的区域',
-      //   version: 'pro',
-      //   type: '{cols: ColumnConfig[], rows: any[]}',
-      //   enum: '',
-      //   defVal: '',
-      //   list: []
-      // },
+      {
+        name: 'getCellAreas()',
+        desc: '如果功能被支持，用于 mouse-config.area，用于获取鼠标选择的所有区域',
+        version: 'pro',
+        type: 'Array<{cols: ColumnConfig[], rows: any[]}>',
+        enum: '',
+        defVal: '',
+        list: []
+      },
+      {
+        name: 'getActiveCellArea()',
+        desc: '如果功能被支持，用于 mouse-config.area，用于获取区域中的活动单元格',
+        version: 'pro',
+        type: '{column: ColumnConfig, row: any}',
+        enum: '',
+        defVal: '',
+        list: []
+      },
+      {
+        name: 'getCopyCellArea()',
+        desc: '如果功能被支持，用于 mouse-config.area，用于获取被标记为复制状态的区域',
+        version: 'pro',
+        type: '{cols: ColumnConfig[], rows: any[]}',
+        enum: '',
+        defVal: '',
+        list: []
+      },
       {
         name: 'getVirtualScroller()',
         disabled: true,
@@ -3384,15 +3431,6 @@ const apis = [
         defVal: '',
         list: []
       },
-      // {
-      //   name: 'toCellAreaText(areaItem)',
-      //   desc: '用于 mouse-config.area，将指定区域转成文本格式',
-      //   version: 'pro',
-      //   type: 'string',
-      //   enum: '',
-      //   defVal: 'areaItem: MouseCellArea',
-      //   list: []
-      // },
       {
         name: 'hasActiveRow(row)',
         disabled: true,
@@ -3578,15 +3616,15 @@ const apis = [
         defVal: 'row: Row, field: string',
         list: []
       },
-      // {
-      //   name: 'setCellAreas(areas)',
-      //   desc: '用于 mouse-config.area，选择指定区域的单元格',
-      //   version: 'pro',
-      //   type: 'Promise',
-      //   enum: '',
-      //   defVal: 'areas: CellAreaOptions',
-      //   list: []
-      // },
+      {
+        name: 'setCellAreas(areas)',
+        desc: '如果功能被支持，用于 mouse-config.area，选择指定区域的单元格',
+        version: 'pro',
+        type: 'Promise',
+        enum: '',
+        defVal: 'areas: CellAreaOptions',
+        list: []
+      },
       {
         name: 'setMergeCells(merges)',
         desc: '临时合并单元格，如果为数组则合并多个',
@@ -4002,15 +4040,15 @@ const apis = [
       //   defVal: '',
       //   list: []
       // },
-      // {
-      //   name: 'clearCellAreas()',
-      //   desc: '用于 mouse-config.area，用于清除鼠标选择的区域',
-      //   version: 'pro',
-      //   type: 'Promise',
-      //   enum: '',
-      //   defVal: '',
-      //   list: []
-      // },
+      {
+        name: 'clearCellAreas()',
+        desc: '如果功能被支持，用于 mouse-config.area，用于清除鼠标选择的区域',
+        version: 'pro',
+        type: 'Promise',
+        enum: '',
+        defVal: '',
+        list: []
+      },
       {
         name: 'clearData(rows, field)',
         desc: '手动清空单元格内容，如果不创参数，则清空整个表格内容，如果传了行则清空指定行内容，如果传了指定字段，则清空该字段内容',
@@ -4243,7 +4281,7 @@ const apis = [
       },
       {
         name: 'validate(rows, callback)',
-        desc: '快速校验，如果存在记录不通过的记录，则返回不再继续校验（异步校验除外）；如果第一个参数为 true 则校验当前表格数据，如果指定 row 或 rows 则校验指定行或多行，如果不指定，则默认校验状态发生变动的数据，例如新增或修改。该回调函数会在校验结束后被调用 callback(errMap)。若不传入回调函数，则会返回一个 promise',
+        desc: '快速校验，如果存在记录不通过的记录，则返回不再继续校验（异步校验除外）；如果第一个参数为 true 则校验当前表格数据，如果指定 row 或 rows 则校验指定行或多行，如果不指定数据，则默认只校验临时变动的数据，例如新增或修改，例如新增或修改。该回调函数会在校验结束后被调用 callback(errMap)。若不传入回调函数，则会返回一个 promise',
         version: '',
         type: 'Promise<ErrMap>',
         enum: '',
@@ -4360,6 +4398,24 @@ const apis = [
             list: []
           }
         ]
+      },
+      {
+        name: 'openFind()',
+        desc: '如果功能被支持，用于 mouse-config.area，打开单元格查找功能',
+        version: 'pro',
+        type: 'Promise',
+        enum: '',
+        defVal: '',
+        list: []
+      },
+      {
+        name: 'openReplace()',
+        desc: '如果功能被支持，用于 mouse-config.area，打开单元格替换功能',
+        version: 'pro',
+        type: 'Promise',
+        enum: '',
+        defVal: '',
+        list: []
       },
       {
         name: 'focus()',

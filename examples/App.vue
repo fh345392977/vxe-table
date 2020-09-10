@@ -88,7 +88,7 @@
 
     <vxe-modal v-model="supportVisible" :loading="supportLoading" title="💡技术支持" width="800" position="center">
       <template v-slot>
-        <div class="support-declare">考虑到部分用户有需要技术支持的需求，用于快速解决使用过程中遇到的各种问题，您的支持可以帮助该项目持续维护下去！</div>
+        <div class="support-declare">考虑到部分用户有需要技术支持的需求，用于快速解决使用过程中遇到的各种问题，同时您的支持也可以帮助该项目持续维护下去！</div>
         <div>
           <ul class="vxe-row support-question">
             <li class="vxe-col--12" v-for="(item, index) in supportQuestionList" :key="index">
@@ -106,20 +106,28 @@
             <div v-else class="support-price">¥ {{ supportGroupPrice }}<span style="font-size: 12px;color: #606266;">&nbsp;/年</span><vxe-tooltip content="提供使用过程中相关问题的技术支持，有效期一年"><i class="fa fa-question-circle price-help-icon"></i></vxe-tooltip></div>
             <vxe-button class="support-btn" status="primary" @click="addQQGroup">申请成为高级用户</vxe-button>
             <ul class="support-describe">
-              <li>1. 优质的技术支持群</li>
-              <li>2. 快速解决问题</li>
+              <li>优质的技术支持群</li>
             </ul>
           </div>
+          <!-- <div class="vxe-col--12 support-group-item">
+            <div class="support-name">强大的扩展插件</div>
+            <a class="link support-btn" href="https://xuliangzhan_admin.gitee.io/vxe-table/plugins/index.html" target="_blank">查看预览</a>
+            <ul class="support-describe">
+              <li>更强的 pro 专业版</li>
+              <li>更多的实用渲染器</li>
+              <li>...</li>
+            </ul>
+          </div> -->
         </div>
       </template>
     </vxe-modal>
-    <vxe-modal v-model="supportGroupVisible" title="申请成为高级用户" width="600" height="680" position="center">
+    <vxe-modal v-model="supportGroupVisible" title="申请成为高级用户" width="600" height="700" position="center">
       <template v-slot>
         <div class="support-pay-step">
-          <p style="font-size: 12px;">联系邮件： <a href="mailto:xu_liangzhan@163.com">xu_liangzhan@163.com</a></p>
+          <p style="font-size: 12px;">联系邮件： <a class="link" href="mailto:xu_liangzhan@163.com">xu_liangzhan@163.com</a></p>
           <p class="title">1. 扫码申请加入 QQ 群<br><img src="static/support/qq.png"></p>
-          <p class="title">2. 通过支付宝或微信付费：¥{{ supportDiscountPrice || supportGroupPrice }}<br><img src="static/donation/pay.jpg"></p>
-          <p class="title">3. 付费完成后点击“联系收款方”，需要留言QQ号<br>（只通过留言的 QQ 号去匹配是否审批）</p>
+          <p class="title">2. 通过支付宝或微信付费：¥{{ supportGroupPrice }}<br>3. 付费完成后点击 "联系收款方"，留言QQ号即可<br><img src="static/donation/pay.jpg"></p>
+          <p class="title">（注意：必须留言QQ号，否则将无法审批通过）</p>
         </div>
       </template>
     </vxe-modal>
@@ -141,24 +149,20 @@ export default {
       supportGroupVisible: false,
       supportQuestionList: [
         {
-          label: '安装/按需/报错/国际化/版本升级',
-          message: '安装报错、版本升级报错、版本升级兼容性如何解决、国际化如果使用'
+          label: '安装/报错/主题/样式/国际化/版本升级',
+          message: '安装报错、版本升级报错、版本升级兼容性如何解决、国际化如果使用，修改行高、样式、背景，自定义图标'
         },
         {
-          label: '主题/样式/图标相关问题',
-          message: '修改行高、样式、背景，自定义图标，比如 font-awesome、iconfont 等'
-        },
-        {
-          label: '增删改查/数据校验/键盘导航实现',
+          label: '增删改查/数据校验/键盘导航使用',
           message: '实现 Grid 的增删改查、新增保存的数据校验、服务端校验、按键导航事件监听等'
         },
         {
-          label: '列错乱/列权限/动态列/自定义列问题',
+          label: '列控制/动态列/列分组/自定义列问题',
           message: '在 Tabs 页签中列宽显示错乱、弹出框中列显示错乱、在弹出框下拉框被遮挡、日期选择被遮挡等'
         },
         {
-          label: '数据联动/分组显示/合并与列问题',
-          message: '单元格的数据联动、单元格中下拉框级联关系、分组表格实现方式、合并行或列的实现'
+          label: '数据联动/合并与列问题',
+          message: '单元格的数据联动、单元格合并使用'
         },
         {
           label: '数据代理/Grid配置式使用问题',
@@ -169,7 +173,7 @@ export default {
           message: '实现高级筛选模板、自定义单元格可编辑渲染器、复用业务渲染器、下拉容器使用方法、自定义下拉容器实现'
         },
         {
-          label: '虚拟列表/虚拟树/虚拟下拉框使用问题',
+          label: '虚拟列表/虚拟树/虚拟下拉/虚拟合并/虚拟滚动',
           message: '实现大数据虚拟表格、大数据虚拟树表格、大数据虚拟列表、大数据虚拟下拉框、大数据虚拟下拉容器'
         },
         {
@@ -190,7 +194,7 @@ export default {
         },
         {
           label: '额外需求的定制（需咨询）',
-          message: '如果需要定制特殊需求，请先需咨询',
+          message: '如果需要定制特殊需求，购买 pro 版本等，请先需咨询',
           icon: 'fa fa-exclamation-triangle'
         }
       ],
@@ -377,6 +381,12 @@ export default {
               label: 'app.aside.nav.width',
               locat: {
                 name: 'TableWidth'
+              }
+            },
+            {
+              label: 'app.aside.nav.autoBreak',
+              locat: {
+                name: 'TableAutoBreak'
               }
             },
             {
@@ -1124,12 +1134,12 @@ export default {
             //     name: 'TableEditForceRowValid'
             //   }
             // },
-            {
-              label: 'app.aside.nav.highlightCell',
-              locat: {
-                name: 'TableEditHighlightCell'
-              }
-            },
+            // {
+            //   label: 'app.aside.nav.highlightCell',
+            //   locat: {
+            //     name: 'TableEditHighlightCell'
+            //   }
+            // },
             {
               label: 'app.aside.nav.keyboard',
               locat: {
@@ -1790,13 +1800,13 @@ export default {
             //     name: 'TablePluginShortcutKey'
             //   }
             // },
-            {
-              label: 'app.aside.nav.chartsPlugin',
-              demoUrl: 'https://jsrun.pro/9aWKp/edit',
-              locat: {
-                name: 'TablePluginCharts'
-              }
-            },
+            // {
+            //   label: 'app.aside.nav.chartsPlugin',
+            //   demoUrl: 'https://jsrun.pro/9aWKp/edit',
+            //   locat: {
+            //     name: 'TablePluginCharts'
+            //   }
+            // },
             {
               label: 'app.aside.nav.exportXLSXPlugin',
               demoUrl: 'https://jsrun.pro/PIWKp/edit',
@@ -1824,12 +1834,12 @@ export default {
                 name: 'TablePluginMenus'
               }
             },
-            {
-              label: 'app.aside.nav.excelPlugin',
-              locat: {
-                name: 'TablePluginExcel'
-              }
-            },
+            // {
+            //   label: 'app.aside.nav.excelPlugin',
+            //   locat: {
+            //     name: 'TablePluginExcel'
+            //   }
+            // },
             {
               label: 'app.aside.nav.treeRowPlugin',
               locat: {
@@ -2396,11 +2406,12 @@ export default {
           location.href = '/vxe-table/v2/index.html'
           break
         case '3':
-          location.href = '/vxe-table'
+          location.href = '/vxe-table/v3/index.html'
           break
         case '4':
-          this.version = '2'
-          this.$XModal.message({ message: this.$t('app.body.other.newDevelopment'), status: 'info' })
+          this.$XModal.alert({ message: this.$t('app.body.other.newDevelopment'), status: 'info' }).then(() => {
+            location.href = '/vxe-table/'
+          })
           break
       }
     }

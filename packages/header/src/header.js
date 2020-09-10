@@ -223,7 +223,7 @@ export default {
       const pos = DomTools.getOffsetPos(dragBtnElem, $el)
       const dragBtnWidth = dragBtnElem.clientWidth
       const dragBtnOffsetWidth = Math.floor(dragBtnWidth / 2)
-      const minInterval = column.getMinWidth() - dragBtnOffsetWidth // 列之间的最小间距
+      const minInterval = UtilTools.getColMinWidth($xetable, column) - dragBtnOffsetWidth // 列之间的最小间距
       let dragMinLeft = pos.left - cell.clientWidth + dragBtnWidth + minInterval
       let dragPosLeft = pos.left + dragBtnOffsetWidth
       const domMousemove = document.onmousemove
@@ -265,7 +265,7 @@ export default {
           left = Math.min(left, dragPosLeft + cell.clientWidth - minInterval)
         } else {
           dragMinLeft = Math.max(tableBodyElem.scrollLeft, dragMinLeft)
-          left = Math.min(left, tableBodyElem.clientWidth + tableBodyElem.scrollLeft - 40)
+          // left = Math.min(left, tableBodyElem.clientWidth + tableBodyElem.scrollLeft - 40)
         }
         dragLeft = Math.max(left, dragMinLeft)
         resizeBarElem.style.left = `${dragLeft - scrollLeft}px`
@@ -291,6 +291,7 @@ export default {
         $xetable.emitEvent('resizable-change', params, evnt)
       }
       updateEvent(evnt)
+      $xetable.closeMenu()
     }
   }
 }

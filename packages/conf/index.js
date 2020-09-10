@@ -32,16 +32,6 @@ const GlobalConfig = {
     // checkboxConfig: {
     //   trigger: 'default'
     // },
-    // sortConfig: {
-    //   remote: false,
-    //   trigger: 'default',
-    //   orders: ['asc', 'desc', null],
-    //   sortMethod: null
-    // },
-    // filterConfig: {
-    //   remote: false,
-    //   filterMethod: null
-    // },
     // tooltipConfig: {
     //   theme: 'dark',
     //   enterable: false
@@ -57,10 +47,22 @@ const GlobalConfig = {
     //  checkMethod () {}
     // },
     // rowId: '_XID', // 行数据的唯一主键字段名
+    sortConfig: {
+      // remote: false,
+      // trigger: 'default',
+      // orders: ['asc', 'desc', null],
+      // sortMethod: null,
+      showIcon: true
+    },
+    filterConfig: {
+      // remote: false,
+      // filterMethod: null,
+      showIcon: true
+    },
     treeConfig: {
-      // children: 'children',
-      // hasChild: 'hasChild',
-      // indent: 20,
+      children: 'children',
+      hasChild: 'hasChild',
+      indent: 20,
       showIcon: true
     },
     expandConfig: {
@@ -69,6 +71,7 @@ const GlobalConfig = {
     },
     editConfig: {
       // mode: 'cell',
+      showIcon: true,
       showAsterisk: true
     },
     importConfig: {
@@ -77,6 +80,9 @@ const GlobalConfig = {
     exportConfig: {
       isPrint: true,
       modes: ['current', 'selected']
+    },
+    mouseConfig: {
+      extension: true
     },
     scrollX: {
       gt: 60
@@ -265,7 +271,7 @@ const GlobalConfig = {
   modal: {
     // size: null,
     minWidth: 340,
-    minHeight: 200,
+    minHeight: 140,
     lockView: true,
     mask: true,
     duration: 3000,

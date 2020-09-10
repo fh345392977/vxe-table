@@ -191,6 +191,8 @@ const Methods = {
       this.clearChecked()
       this.clearSelected()
       this.clearCopyed()
+    }
+    if (this.mouseConfig) {
       this.clearCellAreas()
       this.clearCopyCellArea()
     }
@@ -234,6 +236,7 @@ const Methods = {
     const scrollYLoad = !treeConfig && sYOpts.gt > -1 && sYOpts.gt <= tableFullData.length
     scrollYStore.startIndex = 0
     scrollYStore.visibleIndex = 0
+    scrollYStore.renderSize = 1
     editStore.insertList = []
     editStore.removeList = []
     // 全量数据
@@ -359,7 +362,7 @@ const Methods = {
       if (isLazy && row[treeOpts.hasChild] && XEUtils.isUndefined(row[treeOpts.children])) {
         row[treeOpts.children] = null
       }
-      const rest = { row, rowid, index, items, parent }
+      const rest = { row, rowid, index: treeConfig && parent ? -1 : index, items, parent }
       if (source) {
         fullDataRowIdData[rowid] = rest
         fullDataRowMap.set(row, rest)
@@ -397,7 +400,7 @@ const Methods = {
       if (row[hasChild] && XEUtils.isUndefined(row[children])) {
         row[children] = null
       }
-      const rest = { row, rowid, index, items, parent }
+      const rest = { row, rowid, index: -1, items, parent }
       fullDataRowIdData[rowid] = rest
       fullDataRowMap.set(row, rest)
       fullAllDataRowIdData[rowid] = rest
@@ -423,7 +426,7 @@ const Methods = {
       const rest = { column, colid, index, items, parent }
       if (property) {
         if (fullColumnFieldData[property]) {
-          UtilTools.warn('vxe.error.fieldRepet', [property])
+          UtilTools.warn('vxe.error.fieldRepet', ['field', property])
         }
         fullColumnFieldData[property] = rest
       }
@@ -434,6 +437,9 @@ const Methods = {
         treeNodeColumn = column
       } else if (!expandColumn && type === 'expand') {
         expandColumn = column
+      }
+      if (fullColumnIdData[colid]) {
+        UtilTools.error('vxe.error.fieldRepet', ['colId', colid])
       }
       fullColumnIdData[colid] = rest
       fullColumnMap.set(column, rest)
@@ -1790,7 +1796,7 @@ const Methods = {
     // 该行为只对当前激活的表格有效
     if (this.isActivated) {
       this.preventEvent(evnt, 'event.keydown', null, () => {
-        const { isCtxMenu, ctxMenuStore, editStore, editOpts, mouseConfig = {}, keyboardConfig = {}, treeConfig, treeOpts, highlightCurrentRow, currentRow } = this
+        const { isCtxMenu, ctxMenuStore, editStore, editOpts, editConfig, mouseConfig = {}, keyboardConfig = {}, treeConfig, treeOpts, highlightCurrentRow, currentRow, bodyCtxMenu } = this
         const { selected, actived } = editStore
         const keyCode = evnt.keyCode
         const isBack = keyCode === 8
@@ -1805,10 +1811,12 @@ const Methods = {
         const isDel = keyCode === 46
         const isA = keyCode === 65
         const isF2 = keyCode === 113
+        const isContextMenu = keyCode === 93
         const isCtrlKey = evnt.ctrlKey
         const isShiftKey = evnt.shiftKey
         const operArrow = isLeftArrow || isUpArrow || isRightArrow || isDwArrow
         const operCtxMenu = isCtxMenu && ctxMenuStore.visible && (isEnter || isSpacebar || operArrow)
+        const isEditStatus = editConfig && actived.column && actived.row
         let params
         if (operCtxMenu) {
           // 如果配置了右键菜单; 支持方向键操作、回车
@@ -1820,7 +1828,7 @@ const Methods = {
           }
         } else if (keyboardConfig && this.mouseConfig && this.mouseOpts.area && this.handleKeyboardEvent) {
           this.handleKeyboardEvent(evnt)
-        } if (isSpacebar && (keyboardConfig.isArrow || keyboardConfig.isTab) && selected.row && selected.column && (selected.column.type === 'checkbox' || selected.column.type === 'selection' || selected.column.type === 'radio')) {
+        } else if (isSpacebar && (keyboardConfig.isArrow || keyboardConfig.isTab) && selected.row && selected.column && (selected.column.type === 'checkbox' || selected.column.type === 'selection' || selected.column.type === 'radio')) {
           // 在 v3.0 中废弃 type=selection
           // 空格键支持选中复选框
           evnt.preventDefault()
@@ -1844,11 +1852,20 @@ const Methods = {
             }
           }
         } else if (isF2) {
-          // 如果按下了 F2 键
-          if (selected.row && selected.column) {
-            evnt.preventDefault()
-            this.handleActived(selected.args, evnt)
+          if (!isEditStatus) {
+            // 如果按下了 F2 键
+            if (selected.row && selected.column) {
+              evnt.preventDefault()
+              this.handleActived(selected.args, evnt)
+            }
           }
+        } else if (isContextMenu) {
+          // 如果按下上下文键
+          this._keyCtx = selected.row && selected.column && bodyCtxMenu.length
+          clearTimeout(this.keyCtxTimeout)
+          this.keyCtxTimeout = setTimeout(() => {
+            this._keyCtx = false
+          }, 1000)
         } else if (isEnter && keyboardConfig.isEnter && (selected.row || actived.row || (treeConfig && highlightCurrentRow && currentRow))) {
           // 退出选中
           if (isCtrlKey) {
@@ -1891,12 +1908,14 @@ const Methods = {
             }
           }
         } else if (operArrow && keyboardConfig.isArrow) {
-          // 如果按下了方向键
-          if (selected.row && selected.column) {
-            this.moveSelected(selected.args, isLeftArrow, isUpArrow, isRightArrow, isDwArrow, evnt)
-          } else if ((isUpArrow || isDwArrow) && highlightCurrentRow) {
-            // 当前行按键上下移动
-            this.moveCurrentRow(isUpArrow, isDwArrow, evnt)
+          if (!isEditStatus) {
+            // 如果按下了方向键
+            if (selected.row && selected.column) {
+              this.moveSelected(selected.args, isLeftArrow, isUpArrow, isRightArrow, isDwArrow, evnt)
+            } else if ((isUpArrow || isDwArrow) && highlightCurrentRow) {
+              // 当前行按键上下移动
+              this.moveCurrentRow(isUpArrow, isDwArrow, evnt)
+            }
           }
         } else if (isTab && keyboardConfig.isTab) {
           // 如果按下了 Tab 键切换
@@ -1906,27 +1925,31 @@ const Methods = {
             this.moveTabSelected(actived.args, isShiftKey, evnt)
           }
         } else if (isDel || (treeConfig && highlightCurrentRow && currentRow ? isBack && keyboardConfig.isArrow : isBack)) {
-          // 如果是删除键
-          if (keyboardConfig.isDel && (selected.row || selected.column)) {
-            setCellValue(selected.row, selected.column, null)
-            if (isBack) {
-              this.handleActived(selected.args, evnt)
-            }
-          } else if (isBack && keyboardConfig.isArrow && treeConfig && highlightCurrentRow && currentRow) {
-            // 如果树形表格回退键关闭当前行返回父节点
-            const { parent: parentRow } = XEUtils.findTree(this.afterFullData, item => item === currentRow, treeOpts)
-            if (parentRow) {
-              evnt.preventDefault()
-              params = { $table: this, row: parentRow }
-              this.setTreeExpand(parentRow, false)
-                .then(() => this.scrollToRow(parentRow))
-                .then(() => this.triggerCurrentRowEvent(evnt, params))
+          if (!isEditStatus) {
+            // 如果是删除键
+            if (keyboardConfig.isDel && (selected.row || selected.column)) {
+              setCellValue(selected.row, selected.column, null)
+              if (isBack) {
+                this.handleActived(selected.args, evnt)
+              }
+            } else if (isBack && keyboardConfig.isArrow && treeConfig && highlightCurrentRow && currentRow) {
+              // 如果树形表格回退键关闭当前行返回父节点
+              const { parent: parentRow } = XEUtils.findTree(this.afterFullData, item => item === currentRow, treeOpts)
+              if (parentRow) {
+                evnt.preventDefault()
+                params = { $table: this, row: parentRow }
+                this.setTreeExpand(parentRow, false)
+                  .then(() => this.scrollToRow(parentRow))
+                  .then(() => this.triggerCurrentRowEvent(evnt, params))
+              }
             }
           }
         } else if (keyboardConfig && isCtrlKey && isA) {
-          // 如果开启复制功能
-          if (keyboardConfig.isCut && this.mouseConfig && this.mouseOpts.checked) {
-            this.handleAllChecked(evnt)
+          if (!isEditStatus) {
+            // 如果开启复制功能
+            if (keyboardConfig.isCut && this.mouseConfig && this.mouseOpts.checked) {
+              this.handleAllChecked(evnt)
+            }
           }
         } else if (keyboardConfig.isEdit && !isCtrlKey && (isSpacebar || (keyCode >= 48 && keyCode <= 57) || (keyCode >= 65 && keyCode <= 90) || (keyCode >= 96 && keyCode <= 111) || (keyCode >= 186 && keyCode <= 192) || (keyCode >= 219 && keyCode <= 222))) {
           // 启用编辑后，空格键功能将失效
@@ -1948,8 +1971,9 @@ const Methods = {
     }
   },
   handleGlobalPasteEvent (evnt) {
-    const { isActivated, keyboardConfig, mouseConfig, mouseOpts } = this
-    if (isActivated) {
+    const { isActivated, keyboardConfig, mouseConfig, mouseOpts, editStore } = this
+    const { actived } = editStore
+    if (isActivated && !(actived.row || actived.column)) {
       if (keyboardConfig && keyboardConfig.isClip && mouseConfig && mouseOpts.area && this.handlePasteCellAreaEvent) {
         this.handlePasteCellAreaEvent(evnt)
       } else if (keyboardConfig && keyboardConfig.isCut && mouseConfig && mouseOpts.checked) {
@@ -1958,8 +1982,9 @@ const Methods = {
     }
   },
   handleGlobalCopyEvent (evnt) {
-    const { isActivated, keyboardConfig, mouseConfig, mouseOpts } = this
-    if (isActivated) {
+    const { isActivated, keyboardConfig, mouseConfig, mouseOpts, editStore } = this
+    const { actived } = editStore
+    if (isActivated && !(actived.row || actived.column)) {
       if (keyboardConfig && keyboardConfig.isClip && mouseConfig && mouseOpts.area && this.handleCopyCellAreaEvent) {
         this.handleCopyCellAreaEvent(evnt)
       } else if (keyboardConfig && keyboardConfig.isCut && mouseConfig && mouseOpts.checked) {
@@ -1968,8 +1993,9 @@ const Methods = {
     }
   },
   handleGlobalCutEvent (evnt) {
-    const { isActivated, keyboardConfig, mouseConfig, mouseOpts } = this
-    if (isActivated) {
+    const { isActivated, keyboardConfig, mouseConfig, mouseOpts, editStore } = this
+    const { actived } = editStore
+    if (isActivated && !(actived.row || actived.column)) {
       if (keyboardConfig && keyboardConfig.isClip && mouseConfig && mouseOpts.area && this.handleCutCellAreaEvent) {
         this.handleCutCellAreaEvent(evnt)
       } else if (keyboardConfig && keyboardConfig.isCut && mouseConfig && mouseOpts.checked) {
@@ -2340,6 +2366,9 @@ const Methods = {
       if (property) {
         const checkValFn = (row) => {
           if (!checkMethod || checkMethod({ row })) {
+            if (value) {
+              selectRows.push(row)
+            }
             XEUtils.set(row, property, value)
           }
         }
@@ -2412,7 +2441,7 @@ const Methods = {
           afterFullData.forEach(row => this.handleCheckboxReserveRow(row, false))
         }
       }
-      this.selection = beforeSelection.concat(selectRows)
+      this.selection = property ? [] : beforeSelection.concat(selectRows)
     }
     this.treeIndeterminates = []
     this.checkSelectionStatus()
@@ -3337,13 +3366,15 @@ const Methods = {
         rows = [rows]
       }
       if (rows.length) {
+        let validRows = toggleMethod ? rows.filter(row => toggleMethod({ expanded, column: treeNodeColumn, columnIndex, $columnIndex, row })) : rows
         if (accordion) {
-          rows = rows.slice(rows.length - 1, rows.length)
+          validRows = validRows.length ? [validRows[validRows.length - 1]] : []
           // 同一级只能展开一个
-          const matchObj = XEUtils.findTree(tableFullData, item => item === rows[0], treeOpts)
-          XEUtils.remove(treeExpandeds, item => matchObj.items.indexOf(item) > -1)
+          const matchObj = XEUtils.findTree(tableFullData, item => item === validRows[0], treeOpts)
+          if (matchObj) {
+            XEUtils.remove(treeExpandeds, item => matchObj.items.indexOf(item) > -1)
+          }
         }
-        const validRows = toggleMethod ? rows.filter(row => toggleMethod({ expanded, column: treeNodeColumn, columnIndex, $columnIndex, row })) : rows
         if (expanded) {
           validRows.forEach(row => {
             if (treeExpandeds.indexOf(row) === -1) {
@@ -3368,7 +3399,7 @@ const Methods = {
         return Promise.all(result).then(this.recalculate)
       }
     }
-    return Promise.resolve()
+    return this.$nextTick()
   },
   // 在 v3.0 中废弃 hasTreeExpand
   hasTreeExpand (row) {
@@ -3800,7 +3831,7 @@ const Methods = {
         const { row, column } = scope
         const type = 'change'
         if (this.hasCellRules(type, row, column)) {
-          const cell = this.getCell(column, row)
+          const cell = this.getCell(row, column)
           if (cell) {
             return this.validCellRules(type, row, column, cellValue)
               .then(() => {
@@ -3828,6 +3859,9 @@ const Methods = {
    * @param {MergeOptions[]} merges { row: Row|number, column: ColumnInfo|number, rowspan: number, colspan: number }
    */
   setMergeCells (merges) {
+    if (this.spanMethod) {
+      UtilTools.error('vxe.error.errConflicts', ['merge-cells', 'span-method'])
+    }
     setMerges(this, merges, this.mergeList, this.afterFullData)
     return this.$nextTick().then(() => this.updateCellAreas())
   },
@@ -3836,6 +3870,9 @@ const Methods = {
    * @param {MergeOptions[]} merges 多个或数组 [{row:Row|number, col:ColumnInfo|number}]
    */
   removeMergeCells (merges) {
+    if (this.spanMethod) {
+      UtilTools.error('vxe.error.errConflicts', ['merge-cells', 'span-method'])
+    }
     const rest = removeMerges(this, merges, this.mergeList, this.afterFullData)
     return this.$nextTick().then(() => {
       this.updateCellAreas()
@@ -3859,10 +3896,16 @@ const Methods = {
     this.setMergeFooterItems(this.mergeFooterItems)
   },
   setMergeFooterItems (merges) {
+    if (this.footerSpanMethod) {
+      UtilTools.error('vxe.error.errConflicts', ['merge-footer-items', 'footer-span-method'])
+    }
     setMerges(this, merges, this.mergeFooterList, null)
     return this.$nextTick().then(() => this.updateCellAreas())
   },
   removeMergeFooterItems (merges) {
+    if (this.footerSpanMethod) {
+      UtilTools.error('vxe.error.errConflicts', ['merge-footer-items', 'footer-span-method'])
+    }
     const rest = removeMerges(this, merges, this.mergeFooterList, null)
     return this.$nextTick().then(() => {
       this.updateCellAreas()
@@ -3912,7 +3955,7 @@ const Methods = {
   /*************************
    * Publish methods
    *************************/
-  getCell (column, row) {
+  getCell (row, column) {
     const { $refs } = this
     const rowid = getRowid(this, row)
     const bodyElem = $refs[`${column.fixed || 'table'}Body`] || $refs.tableBody
@@ -3936,7 +3979,7 @@ const Methods = {
 }
 
 // Module methods
-const funcs = 'setFilter,filter,clearFilter,closeMenu,setActiveCellArea,getActiveCellArea,getCellAreas,toCellAreaText,clearCellAreas,copyCellArea,cutCellArea,pasteCellArea,getCopyCellArea,clearCopyCellArea,setCellAreas,getMouseSelecteds,getMouseCheckeds,getSelectedCell,getSelectedRanges,clearCopyed,clearChecked,clearHeaderChecked,clearIndexChecked,clearSelected,insert,insertAt,remove,removeSelecteds,removeCheckboxRow,removeRadioRow,removeCurrentRow,getRecordset,getInsertRecords,getRemoveRecords,getUpdateRecords,clearActived,getActiveRecord,getActiveRow,hasActiveRow,isActiveByRow,setActiveRow,setActiveCell,setSelectCell,clearValidate,fullValidate,validate,exportCsv,openExport,exportData,openImport,importData,readFile,importByFile,print'.split(',')
+const funcs = 'setFilter,filter,clearFilter,closeMenu,setActiveCellArea,getActiveCellArea,getCellAreas,clearCellAreas,copyCellArea,cutCellArea,pasteCellArea,getCopyCellArea,clearCopyCellArea,setCellAreas,openFind,openReplace,getMouseSelecteds,getMouseCheckeds,getSelectedCell,getSelectedRanges,clearCopyed,clearChecked,clearHeaderChecked,clearIndexChecked,clearSelected,insert,insertAt,remove,removeSelecteds,removeCheckboxRow,removeRadioRow,removeCurrentRow,getRecordset,getInsertRecords,getRemoveRecords,getUpdateRecords,clearActived,getActiveRecord,getActiveRow,hasActiveRow,isActiveByRow,setActiveRow,setActiveCell,setSelectCell,clearValidate,fullValidate,validate,exportCsv,openExport,exportData,openImport,importData,readFile,importByFile,print'.split(',')
 
 funcs.forEach(name => {
   Methods[name] = function (...args) {

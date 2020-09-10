@@ -66,6 +66,7 @@
       "edit-config",
       "valid-config",
       "edit-rules",
+      "empty-text",
       "empty-render",
       "custom-config",
       "animat",
@@ -117,7 +118,8 @@
       "edit-render",
       "content-render",
       "tree-node",
-      "params"
+      "params",
+      "col-id"
     ],
     "description": "基础表格 - 列"
   },
@@ -189,6 +191,7 @@
       "edit-config",
       "valid-config",
       "edit-rules",
+      "empty-text",
       "empty-render",
       "custom-config",
       "animat",
@@ -394,6 +397,7 @@
       "disabled",
       "loading",
       "placement",
+      "destroy-on-close",
       "transfer"
     ],
     "description": "按钮"
@@ -420,6 +424,7 @@
       "title",
       "type",
       "status",
+      "class-name",
       "icon-status",
       "message",
       "cancel-button-text",
@@ -506,6 +511,7 @@
       "size",
       "disabled",
       "placement",
+      "destroy-on-close",
       "transfer"
     ],
     "description": "下拉容器"

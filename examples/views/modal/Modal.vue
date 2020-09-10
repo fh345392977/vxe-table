@@ -4,13 +4,13 @@
 
     <p class="tip">
       轻提示框、提示框、弹出窗口，查看 <router-link class="link" :to="{name: 'VXEAPI', params: {name: 'modal'}}">API</router-link>，可以通过 <router-link class="link" :to="{name: 'StartGlobal'}">setup</router-link> 设置全局参数<br>
-      对于某些场景如果需要动态创建的窗口，可以通过以下 API 全局调用<br>
-      VXETable.modal.open(options) 创建窗口<br>
-      VXETable.modal.message(message, title, options) 创建消息框<br>
-      VXETable.modal.alert(message, title, options) 创建提示框<br>
-      VXETable.modal.confirm(message, title, options) 创建确认框<br>
-      VXETable.modal.close(id?: string) 手动关闭当前活动的窗口<br>
-      全局实例对象：VXETable.modal 或者 ModalController<br>
+      对于某些场景如果需要动态创建的窗口，可以通过以下 API 全局调用：<br>
+      open(options: ModalOptions) 动态创建窗口<br>
+      message(message: string, title?: string, options?: ModalOptions) 动态创建消息框<br>
+      alert(message: string, title?: string, options?: ModalOptions) 动态创建提示框<br>
+      confirm(message: string, title?: string, options?: ModalOptions) 动态创建确认框<br>
+      close(id?: string) 手动关闭当前活动的窗口<br>
+      全局实例对象：this.$XModal || VXETable.modal 或者 ModalController<br>
     </p>
 
     <p>
@@ -38,7 +38,7 @@
     </p>
 
     <p>
-      <vxe-button @click="value1 = !value1">默认尺寸</vxe-button>
+      <vxe-button @click="value1 = true">默认尺寸</vxe-button>
       <vxe-modal v-model="value1">
         <template v-slot>
           <div>默认尺寸</div>
@@ -46,7 +46,7 @@
           <div>xxxxxxxxxx</div>
         </template>
       </vxe-modal>
-      <vxe-button @click="value2 = !value2" size="medium">中等尺寸</vxe-button>
+      <vxe-button @click="value2 = true" size="medium">中等尺寸</vxe-button>
       <vxe-modal v-model="value2" size="medium">
         <template v-slot>
           <div>中等尺寸</div>
@@ -54,7 +54,7 @@
           <div>xxxxxxxxxx</div>
         </template>
       </vxe-modal>
-      <vxe-button @click="value3 = !value3" size="small">小型尺寸</vxe-button>
+      <vxe-button @click="value3 = true" size="small">小型尺寸</vxe-button>
       <vxe-modal v-model="value3" size="small">
         <template v-slot>
           <div>小型尺寸</div>
@@ -62,7 +62,7 @@
           <div>xxxxxxxxxx</div>
         </template>
       </vxe-modal>
-      <vxe-button @click="value4 = !value4" size="mini">超小尺寸</vxe-button>
+      <vxe-button @click="value4 = true" size="mini">超小尺寸</vxe-button>
       <vxe-modal v-model="value4" size="mini">
         <template v-slot>
           <div>超小尺寸</div>
@@ -80,7 +80,7 @@
     </p>
 
     <p>
-      <vxe-button @click="value5 = !value5">基本窗口</vxe-button>
+      <vxe-button @click="value5 = true">基本窗口</vxe-button>
       <vxe-modal v-model="value5" width="600" show-footer>
         <template v-slot>
           <vxe-table
@@ -96,7 +96,7 @@
         </template>
       </vxe-modal>
 
-      <vxe-button @click="value6 = !value6">窗口初始位置</vxe-button>
+      <vxe-button @click="value6 = true">窗口初始位置</vxe-button>
       <vxe-modal v-model="value6" width="600" :position="{top: 200, left: 200}">
         <template v-slot>
           <vxe-table
@@ -112,7 +112,7 @@
         </template>
       </vxe-modal>
 
-      <vxe-button @click="value7 = !value7">拖动窗口调整大小</vxe-button>
+      <vxe-button @click="value7 = true">拖动窗口调整大小</vxe-button>
       <vxe-modal v-model="value7" resize>
         <template v-slot>
           <div style="color: red">按住头部移动！！！！！！！！！！！！！！！</div>
@@ -124,7 +124,7 @@
         </template>
       </vxe-modal>
 
-      <vxe-button @click="value8 = !value8">记忆功能的窗口</vxe-button>
+      <vxe-button @click="value8 = true">记忆功能的窗口</vxe-button>
       <vxe-modal v-model="value8" title="记忆功能的窗口" width="600" height="400" resize remember>
         <template v-slot>
           <vxe-form :data="formData3" :rules="formRules3" title-align="right" title-width="60">
@@ -145,7 +145,7 @@
         </template>
       </vxe-modal>
 
-      <vxe-button @click="value9 = !value9">最大化显示</vxe-button>
+      <vxe-button @click="value9 = true">最大化显示</vxe-button>
       <vxe-modal v-model="value9" title="最大化显示" width="600" height="400" resize remember fullscreen>
         <template v-slot>
           <div style="color: red">默认最大化显示</div>
@@ -158,7 +158,7 @@
         </template>
       </vxe-modal>
 
-      <vxe-button @click="value10 = !value10">缩放表格的窗口</vxe-button>
+      <vxe-button @click="value10 = true">缩放表格的窗口</vxe-button>
       <vxe-modal v-model="value10" title="缩放表格的窗口" width="800" height="400" resize>
         <template v-slot>
           <vxe-table
@@ -177,7 +177,7 @@
         </template>
       </vxe-modal>
 
-      <vxe-button @click="value11 = !value11">完整功能的窗口（移动、拖动、状态保存）</vxe-button>
+      <vxe-button @click="value11 = true">完整功能的窗口（移动、拖动、状态保存）</vxe-button>
       <vxe-modal v-model="value11" id="myModal6" width="800" height="400" min-width="460" min-height="320" resize remember storage transfer>
         <template v-slot:title>
           <span style="color: red;">完整功能的窗口（移动、拖动、状态保存）</span>
@@ -324,7 +324,7 @@ export default {
         </p>
 
         <p>
-          <vxe-button @click="value1 = !value1">默认尺寸</vxe-button>
+          <vxe-button @click="value1 = true">默认尺寸</vxe-button>
           <vxe-modal v-model="value1">
             <template v-slot>
               <div>默认尺寸</div>
@@ -332,7 +332,7 @@ export default {
               <div>xxxxxxxxxx</div>
             </template>
           </vxe-modal>
-          <vxe-button @click="value2 = !value2" size="medium">中等尺寸</vxe-button>
+          <vxe-button @click="value2 = true" size="medium">中等尺寸</vxe-button>
           <vxe-modal v-model="value2" size="medium">
             <template v-slot>
               <div>中等尺寸</div>
@@ -340,7 +340,7 @@ export default {
               <div>xxxxxxxxxx</div>
             </template>
           </vxe-modal>
-          <vxe-button @click="value3 = !value3" size="small">小型尺寸</vxe-button>
+          <vxe-button @click="value3 = true" size="small">小型尺寸</vxe-button>
           <vxe-modal v-model="value3" size="small">
             <template v-slot>
               <div>小型尺寸</div>
@@ -348,7 +348,7 @@ export default {
               <div>xxxxxxxxxx</div>
             </template>
           </vxe-modal>
-          <vxe-button @click="value4 = !value4" size="mini">超小尺寸</vxe-button>
+          <vxe-button @click="value4 = true" size="mini">超小尺寸</vxe-button>
           <vxe-modal v-model="value4" size="mini">
             <template v-slot>
               <div>超小尺寸</div>
@@ -366,7 +366,7 @@ export default {
         </p>
 
         <p>
-          <vxe-button @click="value5 = !value5">基本窗口</vxe-button>
+          <vxe-button @click="value5 = true">基本窗口</vxe-button>
           <vxe-modal v-model="value5" width="600" show-footer>
             <template v-slot>
               <vxe-table
@@ -382,7 +382,7 @@ export default {
             </template>
           </vxe-modal>
 
-          <vxe-button @click="value6 = !value6">窗口初始位置</vxe-button>
+          <vxe-button @click="value6 = true">窗口初始位置</vxe-button>
           <vxe-modal v-model="value6" width="600" :position="{top: 200, left: 200}">
             <template v-slot>
               <vxe-table
@@ -398,7 +398,7 @@ export default {
             </template>
           </vxe-modal>
 
-          <vxe-button @click="value7 = !value7">拖动窗口调整大小</vxe-button>
+          <vxe-button @click="value7 = true">拖动窗口调整大小</vxe-button>
           <vxe-modal v-model="value7" resize>
             <template v-slot>
               <div style="color: red">按住头部移动！！！！！！！！！！！！！！！</div>
@@ -410,7 +410,7 @@ export default {
             </template>
           </vxe-modal>
 
-          <vxe-button @click="value8 = !value8">记忆功能的窗口</vxe-button>
+          <vxe-button @click="value8 = true">记忆功能的窗口</vxe-button>
           <vxe-modal v-model="value8" title="记忆功能的窗口" width="600" height="400" resize remember>
             <template v-slot>
               <vxe-form :data="formData3" :rules="formRules3" title-align="right" title-width="60">
@@ -431,7 +431,7 @@ export default {
             </template>
           </vxe-modal>
 
-          <vxe-button @click="value9 = !value9">最大化显示</vxe-button>
+          <vxe-button @click="value9 = true">最大化显示</vxe-button>
           <vxe-modal v-model="value9" title="最大化显示" width="600" height="400" resize remember fullscreen>
             <template v-slot>
               <div style="color: red">默认最大化显示</div>
@@ -444,7 +444,7 @@ export default {
             </template>
           </vxe-modal>
 
-          <vxe-button @click="value10 = !value10">缩放表格的窗口</vxe-button>
+          <vxe-button @click="value10 = true">缩放表格的窗口</vxe-button>
           <vxe-modal v-model="value10" title="缩放表格的窗口" width="800" height="400" resize>
             <template v-slot>
               <vxe-table
@@ -463,7 +463,7 @@ export default {
             </template>
           </vxe-modal>
 
-          <vxe-button @click="value11 = !value11">完整功能的窗口（移动、拖动、状态保存）</vxe-button>
+          <vxe-button @click="value11 = true">完整功能的窗口（移动、拖动、状态保存）</vxe-button>
           <vxe-modal v-model="value11" id="myModal6" width="800" height="400" min-width="460" min-height="320" resize remember storage transfer>
             <template v-slot:title>
               <span style="color: red;">完整功能的窗口（移动、拖动、状态保存）</span>

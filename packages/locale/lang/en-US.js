@@ -14,10 +14,11 @@ export default {
       reqProp: 'Missing the necessary "{{0}}" parameter, which can cause error.',
       emptyProp: 'The property "{{0}}" is not allowed to be empty.',
       errProp: 'Unsupported parameter "{{0}}", possibly "{{1}}".',
-      fieldRepet: 'The column field "{{0}}" is duplicated, which may make some features unusable',
+      fieldRepet: 'column.{{0}}="{{0}}" is duplicated, which may make some features unusable',
       notFunc: 'method "{{0}}" not exist.',
       notSlot: 'slot "{{0}}" does not exist',
       noTree: 'The tree structure does not support "{{0}}".',
+      notProp: 'Unsupported parameters "{{0}}"',
       delFunc: 'The function "{{0}}" is deprecated, please use "{{1}}".',
       delProp: 'The property "{{0}}" is deprecated, please use "{{1}}".',
       delEvent: 'The event "{{0}}" is deprecated, please use "{{1}}"',
@@ -71,6 +72,40 @@ export default {
         notData: 'No data'
       }
     },
+    pro: {
+      area: {
+        mergeErr: 'The operation cannot be performed on merged cells',
+        multiErr: 'The operation cannot be performed on multiple selection areas',
+        extendErr: 'If the extended area contains merged cells, all merged cells need to be the same size'
+      },
+      fnr: {
+        title: 'Find and replace',
+        findLabel: 'Find',
+        replaceLabel: 'Replace',
+        findTitle: 'What to find:',
+        replaceTitle: 'Replace with:',
+        tabs: {
+          find: 'Find',
+          replace: 'Replace'
+        },
+        btns: {
+          findNext: 'Find next',
+          findAll: 'Find all',
+          replace: 'Replace',
+          replaceAll: 'Replace all',
+          cancel: 'Cancel'
+        },
+        header: {
+          seq: '#',
+          cell: 'Cell',
+          value: 'Value'
+        },
+        empty: '(Empty)',
+        recordCount: 'Found {{0}} cells',
+        notCell: 'No matching cells were found',
+        replaceSuccess: 'Successfully replaced {{0}} cells'
+      }
+    },
     table: {
       emptyText: 'No Data',
       allTitle: 'Select all / cancel',
@@ -99,6 +134,9 @@ export default {
       delSuccess: 'Successfully deleted the selected record!',
       saveSuccess: 'Saved successfully!',
       operError: 'Error occurred, operation failed!'
+    },
+    select: {
+      emptyText: 'No Data'
     },
     pager: {
       goto: 'Go to',
@@ -201,6 +239,7 @@ export default {
         dayLabel: '{{1}} {{0}}',
         labelFormat: {
           date: 'dd/MM/yyyy',
+          time: 'HH:mm:ss',
           datetime: 'yyyy-MM-dd HH:mm:ss',
           week: '[Week] WW, yyyy',
           month: 'MM/yyyy',

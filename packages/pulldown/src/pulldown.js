@@ -7,10 +7,12 @@ export default {
     disabled: Boolean,
     placement: String,
     size: { type: String, default: () => GlobalConfig.size },
+    destroyOnClose: Boolean,
     transfer: Boolean
   },
   data () {
     return {
+      inited: false,
       panelIndex: 0,
       panelStyle: null,
       panelPlacement: null,
@@ -30,11 +32,6 @@ export default {
     GlobalEvent.on(this, 'mousedown', this.handleGlobalMousedownEvent)
     GlobalEvent.on(this, 'blur', this.handleGlobalBlurEvent)
   },
-  mounted () {
-    if (this.transfer) {
-      document.body.appendChild(this.$refs.panel)
-    }
-  },
   beforeDestroy () {
     const panelElem = this.$refs.panel
     if (panelElem && panelElem.parentNode) {
@@ -47,7 +44,9 @@ export default {
     GlobalEvent.off(this, 'blur')
   },
   render (h) {
-    const { $slots, vSize, transfer, isActivated, disabled, animatVisible, visiblePanel, panelStyle, panelPlacement } = this
+    const { $scopedSlots, inited, vSize, destroyOnClose, transfer, isActivated, disabled, animatVisible, visiblePanel, panelStyle, panelPlacement } = this
+    const defaultSlot = $scopedSlots.default
+    const downSlot = $scopedSlots.dropdown
     return h('div', {
       class: ['vxe-pulldown', {
         [`size--${vSize}`]: vSize,
@@ -59,7 +58,7 @@ export default {
       h('div', {
         ref: 'content',
         class: 'vxe-pulldown--content'
-      }, $slots.default),
+      }, defaultSlot ? defaultSlot.call(this, { $pulldown: this }, h) : []),
       h('div', {
         ref: 'panel',
         class: ['vxe-table--ignore-clear vxe-pulldown--panel', {
@@ -72,19 +71,16 @@ export default {
           'data-placement': panelPlacement
         },
         style: panelStyle
-      }, $slots.dropdown)
+      }, downSlot ? (!inited || (destroyOnClose && !visiblePanel && !animatVisible) ? [] : downSlot.call(this, { $pulldown: this }, h)) : [])
     ])
   },
   methods: {
     handleGlobalMousewheelEvent (evnt) {
-      const { $refs, $el, disabled, visiblePanel } = this
+      const { $refs, disabled, visiblePanel } = this
       if (!disabled) {
         if (visiblePanel) {
-          const hasSlef = DomTools.getEventTargetNode(evnt, $el).flag
-          if (hasSlef || DomTools.getEventTargetNode(evnt, $refs.panel).flag) {
-            if (hasSlef) {
-              this.updatePlacement()
-            }
+          if (DomTools.getEventTargetNode(evnt, $refs.panel).flag) {
+            this.updatePlacement()
           } else {
             this.hidePanel()
             this.$emit('hide-panel', { $event: evnt })
@@ -129,6 +125,12 @@ export default {
      * 显示下拉面板
      */
     showPanel () {
+      if (!this.inited) {
+        this.inited = true
+        if (this.transfer) {
+          document.body.appendChild(this.$refs.panel)
+        }
+      }
       return new Promise(resolve => {
         if (!this.disabled) {
           clearTimeout(this.hidePanelTimeout)

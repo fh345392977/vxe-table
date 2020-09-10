@@ -15,6 +15,7 @@ export default {
     loading: { type: Boolean, default: null },
     status: String,
     iconStatus: String,
+    className: String,
     top: { type: [Number, String], default: 15 },
     position: [String, Object],
     title: String,
@@ -86,16 +87,13 @@ export default {
     activeModals.push(this)
   },
   mounted () {
-    const { $listeners, $el, events = {}, transfer } = this
+    const { $listeners, events = {} } = this
     if (this.value) {
       this.open()
     }
     this.recalculate()
     if (this.escClosable) {
       GlobalEvent.on(this, 'keydown', this.handleGlobalKeydownEvent)
-    }
-    if (transfer) {
-      document.body.appendChild($el)
     }
     // 触发 inserted 事件
     const type = 'inserted'
@@ -116,7 +114,7 @@ export default {
     XEUtils.remove(activeModals, $modal => $modal === this)
   },
   render (h) {
-    const { $scopedSlots, slots = {}, inited, vSize, type, resize, animat, loading, status, iconStatus, showFooter, zoomLocat, modalTop, dblclickZoom, contentVisible, visible, title, message, lockScroll, lockView, mask, isMsg, showTitleOverflow, destroyOnClose } = this
+    const { $scopedSlots, slots = {}, inited, vSize, className, type, resize, animat, loading, status, iconStatus, showFooter, zoomLocat, modalTop, dblclickZoom, contentVisible, visible, title, message, lockScroll, lockView, mask, isMsg, showTitleOverflow, destroyOnClose } = this
     const defaultSlot = $scopedSlots.default || slots.default
     const footerSlot = $scopedSlots.footer || slots.footer
     const headerSlot = $scopedSlots.header || slots.header
@@ -128,7 +126,7 @@ export default {
       headerOns.dblclick = this.toggleZoomEvent
     }
     return h('div', {
-      class: ['vxe-modal--wrapper', `type--${type}`, {
+      class: ['vxe-modal--wrapper', `type--${type}`, className, {
         [`size--${vSize}`]: vSize,
         [`status--${status}`]: status,
         'is--animat': animat,
@@ -208,11 +206,13 @@ export default {
           class: 'vxe-modal--footer'
         }, footerSlot ? (!inited || (destroyOnClose && !visible) ? [] : footerSlot.call(this, { $modal: this }, h)) : [
           type === 'confirm' ? h('vxe-button', {
+            ref: 'cancelBtn',
             on: {
               click: this.cancelEvent
             }
           }, this.cancelButtonText || GlobalConfig.i18n('vxe.button.cancel')) : null,
           h('vxe-button', {
+            ref: 'confirmBtn',
             props: {
               status: 'primary'
             },
@@ -275,9 +275,12 @@ export default {
       this.close(type)
     },
     open () {
-      const { events = {}, inited, duration, visible, isMsg, remember } = this
+      const { $refs, events = {}, inited, duration, visible, isMsg, remember, showFooter } = this
       if (!inited) {
         this.inited = true
+        if (this.transfer) {
+          document.body.appendChild(this.$el)
+        }
       }
       if (!visible) {
         const type = 'show'
@@ -293,6 +296,12 @@ export default {
         setTimeout(() => {
           this.contentVisible = true
           this.$nextTick(() => {
+            if (showFooter) {
+              const operBtn = $refs.confirmBtn || $refs.cancelBtn
+              if (operBtn) {
+                operBtn.focus()
+              }
+            }
             if (events.show) {
               events.show.call(this, params)
             } else {

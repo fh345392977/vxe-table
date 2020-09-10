@@ -102,6 +102,25 @@ function getPagerSlots (_vm) {
   return slots
 }
 
+function getTableOns (_vm) {
+  const { $listeners, proxyConfig, proxyOpts } = _vm
+  const ons = {}
+  XEUtils.each($listeners, (cb, type) => {
+    ons[type] = (...args) => {
+      _vm.$emit(type, ...args)
+    }
+  })
+  if (proxyConfig) {
+    if (proxyOpts.sort) {
+      ons['sort-change'] = _vm.sortChangeEvent
+    }
+    if (proxyOpts.filter) {
+      ons['filter-change'] = _vm.filterChangeEvent
+    }
+  }
+  return ons
+}
+
 Object.keys(Table.methods).forEach(name => {
   methods[name] = function (...args) {
     return this.$refs.xTable && this.$refs.xTable[name](...args)
@@ -310,7 +329,7 @@ export default {
        */
       h('vxe-table', {
         props: this.tableProps,
-        on: this.getTableOns(),
+        on: getTableOns(this),
         scopedSlots: $scopedSlots,
         ref: 'xTable'
       }, this.$slots.default),
@@ -389,24 +408,6 @@ export default {
       this.clearAll()
       return this.loadColumn(columns)
     },
-    getTableOns () {
-      const { $listeners, proxyConfig, proxyOpts } = this
-      const ons = {}
-      XEUtils.each($listeners, (cb, type) => {
-        ons[type] = (...args) => {
-          this.$emit(type, ...args)
-        }
-      })
-      if (proxyConfig) {
-        if (proxyOpts.sort) {
-          ons['sort-change'] = this.sortChangeEvent
-        }
-        if (proxyOpts.filter) {
-          ons['filter-change'] = this.filterChangeEvent
-        }
-      }
-      return ons
-    },
     initToolbar () {
       this.$nextTick(() => {
         const { xTable, xToolbar } = this.$refs
@@ -416,17 +417,20 @@ export default {
       })
     },
     initPages () {
-      if (this.pagerConfig && this.pagerOpts.pageSize) {
-        this.tablePage.pageSize = this.pagerOpts.pageSize
+      const { tablePage, pagerConfig, pagerOpts } = this
+      const { currentPage, pageSize } = pagerOpts
+      if (pagerConfig) {
+        if (currentPage) {
+          tablePage.currentPage = currentPage
+        }
+        if (pageSize) {
+          tablePage.pageSize = pageSize
+        }
       }
     },
     initProxy () {
       const { proxyInited, proxyConfig, proxyOpts, formConfig, formOpts } = this
       if (proxyConfig) {
-        if (!proxyInited && proxyOpts.autoLoad !== false) {
-          this.proxyInited = true
-          this.$nextTick(() => this.commitProxy('reload'))
-        }
         if (formConfig && proxyOpts.form && formOpts.items) {
           const formData = {}
           formOpts.items.forEach(({ field, itemRender }) => {
@@ -436,7 +440,28 @@ export default {
           })
           this.formData = formData
         }
+        if (!proxyInited && proxyOpts.autoLoad !== false) {
+          this.proxyInited = true
+          this.$nextTick(() => this.initLoad())
+        }
       }
+    },
+    initLoad () {
+      const { $refs } = this
+      const $xetable = $refs.xTable
+      const defaultSort = $xetable.sortOpts.defaultSort
+      let sortParams = {}
+      // 如果使用默认排序
+      if (defaultSort) {
+        sortParams = {
+          property: defaultSort.field,
+          order: defaultSort.order
+        }
+      }
+      this.sortData = sortParams
+      this.filterData = []
+      this.pendingRecords = []
+      this.commitProxy('query')
     },
     handleGlobalKeydownEvent (evnt) {
       const isEsc = evnt.keyCode === 27
@@ -471,8 +496,9 @@ export default {
         case 'mark_cancel':
           this.triggerPendingEvent(code)
           break
-        case 'remove':
+        // 在 v3 中废弃 remove_selection
         case 'remove_selection':
+        case 'remove':
           this.handleDeleteRow(code, 'vxe.grid.removeSelectRecord', () => this.removeCheckboxRow())
           break
         case 'import':
@@ -490,8 +516,11 @@ export default {
         case 'reset_custom':
           this.resetColumn(true)
           break
+        case 'init':
         case 'reload':
         case 'query': {
+          const isInited = code === 'init'
+          const isReload = code === 'reload'
           const ajaxMethods = ajax.query
           if (ajaxMethods) {
             const params = {
@@ -504,12 +533,15 @@ export default {
               options: ajaxMethods
             }
             if (pagerConfig) {
+              if (isReload) {
+                tablePage.currentPage = 1
+              }
               params.page = tablePage
             }
-            if (code === 'reload') {
+            if (isInited || isReload) {
               const defaultSort = $xetable.sortOpts.defaultSort
               let sortParams = {}
-              if (pagerConfig) {
+              if (isReload) {
                 tablePage.currentPage = 1
               }
               // 如果使用默认排序
@@ -549,15 +581,16 @@ export default {
           }
           break
         }
+        // 在 v3 中废弃 delete_selection
         case 'delete_selection':
         case 'delete': {
-          this.handleDeleteRow(code, 'vxe.grid.deleteSelectRecord', () => {
-            const ajaxMethods = ajax.delete
-            if (ajaxMethods) {
-              const removeRecords = this.getCheckboxRecords()
-              const body = { removeRecords }
-              const applyArgs = [{ $grid: this, code, button, body, options: ajaxMethods }].concat(args)
-              if (removeRecords.length) {
+          const ajaxMethods = ajax.delete
+          if (ajaxMethods) {
+            const removeRecords = this.getCheckboxRecords()
+            const body = { removeRecords }
+            const applyArgs = [{ $grid: this, code, button, body, options: ajaxMethods }].concat(args)
+            if (removeRecords.length) {
+              return this.handleDeleteRow(code, 'vxe.grid.deleteSelectRecord', () => {
                 this.tableLoading = true
                 return Promise.resolve((beforeDelete || ajaxMethods).apply(this, applyArgs))
                   .then(rest => {
@@ -578,15 +611,15 @@ export default {
                       VXETable.modal.message({ id: code, message: this.getRespMsg(rest, 'vxe.grid.operError'), status: 'error' })
                     }
                   })
-              } else {
-                if (isMsg) {
-                  VXETable.modal.message({ id: code, message: GlobalConfig.i18n('vxe.grid.selectOneRecord'), status: 'warning' })
-                }
-              }
+              })
             } else {
-              UtilTools.error('vxe.error.notFunc', [code])
+              if (isMsg) {
+                VXETable.modal.message({ id: code, message: GlobalConfig.i18n('vxe.grid.selectOneRecord'), status: 'warning' })
+              }
             }
-          })
+          } else {
+            UtilTools.error('vxe.error.notFunc', [code])
+          }
           break
         }
         case 'save': {
@@ -658,13 +691,13 @@ export default {
       const selectRecords = this.getCheckboxRecords()
       if (this.isMsg) {
         if (selectRecords.length) {
-          VXETable.modal.confirm(GlobalConfig.i18n(alertKey)).then(type => {
+          return VXETable.modal.confirm({ id: `cfm_${code}`, message: GlobalConfig.i18n(alertKey), escClosable: true }).then(type => {
             if (type === 'confirm') {
               callback()
             }
           })
         } else {
-          VXETable.modal.message({ id: code, message: GlobalConfig.i18n('vxe.grid.selectOneRecord'), status: 'warning' })
+          VXETable.modal.message({ id: `msg_${code}`, message: GlobalConfig.i18n('vxe.grid.selectOneRecord'), status: 'warning' })
         }
       } else {
         if (selectRecords.length) {
@@ -782,7 +815,7 @@ export default {
       this.$emit('form-submit-invalid', Object.assign({ $grid: this }, params), evnt)
     },
     togglCollapseEvent (params, evnt) {
-      this.recalculate(true)
+      this.$nextTick(() => this.recalculate(true))
       this.$emit('form-toggle-collapse', Object.assign({ $grid: this }, params), evnt)
     },
     triggerZoomEvent (evnt) {
