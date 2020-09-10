@@ -87,7 +87,7 @@ function renderCustoms (h, _vm) {
     const colKey = column.getKey()
     const isColGroup = column.children && column.children.length
     const isDisabled = checkMethod ? !checkMethod({ column }) : false
-    if ((isColGroup || colKey) && column.showInCustom) {
+    if ((isColGroup || colKey) && !column.type && column.showInCustom) {
       cols.push(
         h('li', {
           class: ['vxe-custom--option', `level--${column.level}`, {

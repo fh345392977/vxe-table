@@ -12,7 +12,7 @@
       export-config
       height="300"
       :data="tableData1">
-      <vxe-table-column type="seq" width="60" :show-in-custom="false"></vxe-table-column>
+      <vxe-table-column type="seq" width="60"></vxe-table-column>
       <vxe-table-column title="分组信息">
         <vxe-table-column title="基本信息">
           <vxe-table-column field="name" title="app.body.label.name"></vxe-table-column>
