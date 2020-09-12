@@ -4638,7 +4638,7 @@ file-saver@^2.0.2:
   resolved "https://registry.yarnpkg.com/file-saver/-/file-saver-2.0.2.tgz#06d6e728a9ea2df2cce2f8d9e84dfcdc338ec17a"
   integrity sha512-Wz3c3XQ5xroCxd1G8b7yL0Ehkf0TC9oYC6buPFkNnU9EnaPlifeAFCyCh+iewXTyFRcg0a6j3J7FmJsIhlhBdw==
 
-"file-saver@github:eligrey/FileSaver.js#1.3.8":
+file-saver@eligrey/FileSaver.js#1.3.8:
   version "1.3.8"
   resolved "https://codeload.github.com/eligrey/FileSaver.js/tar.gz/e865e37af9f9947ddcced76b549e27dc45c1cb2e"
 
@@ -10721,10 +10721,10 @@ vxe-table-plugin-shortcut-key@^1.3.0:
   resolved "https://registry.yarnpkg.com/vxe-table-plugin-shortcut-key/-/vxe-table-plugin-shortcut-key-1.3.0.tgz#dc76e39b63a1235f574bfc14ce63170a7f01c533"
   integrity sha512-PVxPGq0TVIrCuhWxotXebYfldoEKwWw2jgW7zbt4mFysrtg7a3D051V2hLFqNJBv6kUX1qRMsF95zBPqp3dq4w==
 
-vxe-table-plugin-virtual-tree@0.4.1:
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/vxe-table-plugin-virtual-tree/-/vxe-table-plugin-virtual-tree-0.4.1.tgz#1caba8ce7a79465aae0d3f1b843fa582da953fd4"
-  integrity sha512-jrEshVrN0Vu0Y3ceI1SH9etCAdnjRE13sFLXeWZX2b+IeUTBNaL3fdV+iuySBA6EZQufCGqywcP4Cvdw9EQb6w==
+vxe-table-plugin-virtual-tree@0.4.2:
+  version "0.4.2"
+  resolved "https://registry.yarnpkg.com/vxe-table-plugin-virtual-tree/-/vxe-table-plugin-virtual-tree-0.4.2.tgz#2d4764a7632b44e821a75164479b2277feea02d0"
+  integrity sha512-Y/KWKD+SqfUoqVZfLNbsfsvgjBVWG3fQu+etHvg6pq4HqCrQtqKUulOiHCyIcYBev6VktJCi+pzXpAQ7spS3ig==
 
 warning@^4.0.0:
   version "4.0.3"
@@ -11033,25 +11033,25 @@ ws@^6.0.0, ws@^6.2.1:
   dependencies:
     async-limiter "~1.0.0"
 
-xe-ajax-mock@^1.10.0:
-  version "1.10.0"
-  resolved "https://registry.yarnpkg.com/xe-ajax-mock/-/xe-ajax-mock-1.10.0.tgz#1cbf7ed04ff319eee342abffbcc00c1819c981c4"
-  integrity sha512-uzkF8YfpSf3yMvZJsiuRTjQuCJKDLfvjD0YQF+phJ5aDx7r4rDKQHAF3KF7QVBXU1SkW2tB1TwbPkQw9BYkbTQ==
+xe-ajax-mock@^1.12.0:
+  version "1.12.0"
+  resolved "https://registry.yarnpkg.com/xe-ajax-mock/-/xe-ajax-mock-1.12.0.tgz#ddd35b031fcb7fe07b33d59825e5eddaa26fc472"
+  integrity sha512-TkprFJr9V6kcbwzczN1n5/JAqh9R9ZJSdXgTHsvHD5qUz1kTikAsJR++WDSemex4KJSNMs94+PJW0pVJZ9nPOw==
 
-xe-ajax@^4.0.4:
-  version "4.0.4"
-  resolved "https://registry.yarnpkg.com/xe-ajax/-/xe-ajax-4.0.4.tgz#b5b1808e3090e2a91621f4fe1df63365f3fbaa32"
-  integrity sha512-essw2sD12tQ6PXTe3vs0jznUGTQlMtxANCa+NspG7/nUC+RrNX1CVBfNgbsw/Fj9zTEn/v/jvoFMp+4CjYYM7w==
+xe-ajax@^4.0.5:
+  version "4.0.5"
+  resolved "https://registry.yarnpkg.com/xe-ajax/-/xe-ajax-4.0.5.tgz#37690f89a37d9b5f54ef2ae4efd3e92570f32df3"
+  integrity sha512-SlVaSfOyBH2Dy51zevNbTIY1EcRlIjoP25YXcN+l9gYfl1rsQ68EsVPD6gw47sM/zzQhiPvqmzM4RzOUggbgaw==
 
-xe-clipboard@^1.9.0:
+xe-clipboard@^1.10.0:
   version "1.10.0"
   resolved "https://registry.yarnpkg.com/xe-clipboard/-/xe-clipboard-1.10.0.tgz#e0fcd65135bbb07c1107eaf1d2eb1a2893f40a94"
   integrity sha512-eteV5pKLd5awGV4cs0z5asFfHSsuWjx6Khbr0VAjd7WfNcClDK1VhEJl7ShLa3XVZFuW5Z38jWdK3X9oBJJO6g==
 
-xe-utils@^2.7.9:
-  version "2.7.9"
-  resolved "https://registry.yarnpkg.com/xe-utils/-/xe-utils-2.7.9.tgz#dbd10dca2bf766217b2344ceb976f8d5ecfc51d4"
-  integrity sha512-H4pcMDQgAGmJztWhN0FyenDgDg8fJqaDRY+4esZ5+ZRfST53cQHNAfkRdyCIJpnNqnerY8wBEAWUOGKnqzQ1Ag==
+xe-utils@^2.7.10:
+  version "2.7.10"
+  resolved "https://registry.yarnpkg.com/xe-utils/-/xe-utils-2.7.10.tgz#b21c9ec358fec92bc44a51f41117dc2ac3f80e92"
+  integrity sha512-JcCclDxMb4rx+iBupBZG22JCGvzmgw+YYliIzL/bR6CPQP/V+UqAyKKEc2SYQrwFkl3XpeYNlHkz+jMmM3kQxA==
 
 xlsx@^0.16.5:
   version "0.16.6"
