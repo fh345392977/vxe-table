@@ -548,7 +548,7 @@ export default {
           }
         } else if ($xegrid) {
           this.isRefresh = true
-          $xegrid.commitProxy('reload').catch(e => e).then(() => {
+          $xegrid.commitProxy('query').catch(e => e).then(() => {
             this.isRefresh = false
           })
         }
