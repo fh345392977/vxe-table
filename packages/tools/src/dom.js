@@ -37,8 +37,9 @@ export const DomTools = {
   isScale (val) {
     return val && /^\d+%$/.test(val)
   },
-  hasClass (elem, cls) {
-    return elem && elem.className && elem.className.match && elem.className.match(getClsRE(cls))
+  hasClass (elem, cls = '') {
+    const clsArr = cls.split('.')
+    return elem && elem.className && elem.className.match && clsArr.every(i => elem.className.match(getClsRE(i)))
   },
   removeClass (elem, cls) {
     if (elem && DomTools.hasClass(elem, cls)) {

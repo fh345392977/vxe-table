@@ -1723,7 +1723,7 @@ const Methods = {
                 isClear = rowNode.flag ? getRowNode(rowNode.targetElem).item !== actived.args.row : false
               } else {
                 // cell 方式，如果是非编辑列
-                isClear = !getEventTargetNode(evnt, $el, editOpts.trigger === 'dblclick' ? 'col--edit col--actived' : 'col--edit').flag
+                isClear = !getEventTargetNode(evnt, $el, editOpts.trigger === 'dblclick' ? 'col--edit.col--actived' : 'col--edit').flag
               }
               if (!isClear) {
                 isClear = getEventTargetNode(evnt, $el, 'vxe-header--row').flag

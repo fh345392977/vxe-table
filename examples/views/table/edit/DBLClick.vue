@@ -8,7 +8,7 @@
       :data="tableData"
       :edit-config="{trigger: 'dblclick', mode: 'cell'}">
       <vxe-table-column type="seq" width="60"></vxe-table-column>
-      <vxe-table-column field="name" title="Name" :edit-render="{name: 'input', immediate: true, attrs: {type: 'text'}}"></vxe-table-column>
+      <vxe-table-column field="name" title="Name" show-overflow :edit-render="{name: 'input', immediate: true, attrs: {type: 'text'}}"></vxe-table-column>
       <vxe-table-column field="role" title="Role" :edit-render="{name: 'input', immediate: true, attrs: {type: 'text'}}"></vxe-table-column>
       <vxe-table-column field="sex6" title="Sex" :edit-render="{name: '$select', options: sexList, optionProps: {value: 'value2', label: 'label'}}"></vxe-table-column>
       <vxe-table-column field="sex1" title="多选下拉" :edit-render="{name: '$select', options: sexList, props: {multiple: true}}"></vxe-table-column>
