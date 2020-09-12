@@ -6,8 +6,8 @@
 [![npm version](https://img.shields.io/npm/v/vxe-table.svg?style=flat-square)](https://www.npmjs.com/package/vxe-table)
 [![npm build](https://travis-ci.com/x-extends/vxe-table.svg?branch=master)](https://travis-ci.com/x-extends/vxe-table)
 [![npm downloads](https://img.shields.io/npm/dt/vxe-table.svg?style=flat-square)](https://npm-stat.com/charts.html?package=vxe-table)
-[![gzip size: JS](https://img.badgesize.io/https://unpkg.com/vxe-table/lib/index.min.js?compression=gzip&label=gzip%20size:%20JS)](https://unpkg.com/vxe-table/lib/index.min.js)
-[![gzip size: CSS](https://img.badgesize.io/https://unpkg.com/vxe-table/lib/index.css?compression=gzip&label=gzip%20size:%20CSS&color=green)](https://unpkg.com/vxe-table/lib/index.css)  
+[![gzip size: JS](https://img.badgesize.io/https://unpkg.com/vxe-table/lib/vxe-table.umd.min.js?compression=gzip&label=gzip%20size:%20JS)](https://unpkg.com/vxe-table/lib/vxe-table.umd.min.js)
+[![gzip size: CSS](https://img.badgesize.io/https://unpkg.com/vxe-table/lib/vxe-table.min.css?compression=gzip&label=gzip%20size:%20CSS&color=green)](https://unpkg.com/vxe-table/lib/vxe-table.min.css)
 [![issues](https://img.shields.io/github/issues/x-extends/vxe-table.svg)](https://github.com/x-extends/vxe-table/issues)
 [![issues closed](https://img.shields.io/github/issues-closed/x-extends/vxe-table.svg)](https://github.com/x-extends/vxe-table/issues?q=is%3Aissue+is%3Aclosed)
 [![pull requests](https://img.shields.io/github/issues-pr/x-extends/vxe-table.svg)](https://github.com/x-extends/vxe-table/pulls)
@@ -24,7 +24,7 @@
 * [计划](#donation)
   * [x] v1.0 100% 基于 vue2.6+，支持所有主流的浏览器，实现表格的一切实用的功能
   * [x] v2.0 &nbsp;100% 基于 vue2.6+，支持所有主流的浏览器，同时兼具功能与性能
-  * [x] v3.0 &nbsp;&nbsp;80% 基于 vue2.6+，只支持现代浏览器，不支持 IE，渲染性能大幅提升
+  * [x] v3.0 &nbsp;&nbsp;85% 基于 vue2.6+，只支持现代浏览器，不支持 IE，渲染性能大幅提升
   * [ ] v4.0 &nbsp;&nbsp;0% 基于 vue3+，只支持现代浏览器，不支持 IE，渲染性能大幅提升
 
 👉 如果有更好的建议、优化点或 Bug 都欢迎提 [Issues](https://github.com/x-extends/vxe-table/issues/390)
