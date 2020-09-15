@@ -68,6 +68,10 @@ export default {
     data: Array,
     // （v3.0 废弃）
     customs: Array,
+    // 初始表格的滚动
+    initScrollTop: { type: Number, default: 0 },
+    // 初始表格的滚动
+    initScrollLeft: { type: Number, default: 0 },
     // 表格的高度
     height: [Number, String],
     // 表格的最大高度

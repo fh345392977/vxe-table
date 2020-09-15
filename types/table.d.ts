@@ -20,6 +20,14 @@ export declare class Table extends VXETableModule {
    */
   data?: any[];
   /**
+   * 表格初始滚动
+   */
+  initScrollTop?: number;
+  /**
+   * 表格初始滚动
+   */
+  initScrollLeft?: number | string;
+  /**
    * 表格的高度
    */
   height?: number | string;

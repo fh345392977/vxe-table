@@ -10,7 +10,8 @@
     <vxe-grid
       border
       resizable
-      height="530"
+      height="330"
+      :init-scroll-top="200"
       row-id="id"
       :pager-config="{pageSize: 10}"
       :proxy-config="tableProxy"

@@ -461,7 +461,7 @@ export default {
       this.sortData = sortParams
       this.filterData = []
       this.pendingRecords = []
-      this.commitProxy('query')
+      this.commitProxy('init')
     },
     handleGlobalKeydownEvent (evnt) {
       const isEsc = evnt.keyCode === 27
@@ -570,6 +570,13 @@ export default {
                   }
                 } else {
                   this.tableData = []
+                }
+                if (isInited && (this.tableProps.initScrollTop || this.tableProps.initScrollLeft)) {
+                  this.$nextTick(() => {
+                    setTimeout(() => {
+                      this.scrollTo(this.tableProps.initScrollLeft, this.tableProps.initScrollTop)
+                    }, 200)
+                  })
                 }
                 if (afterQuery) {
                   afterQuery(...applyArgs)
