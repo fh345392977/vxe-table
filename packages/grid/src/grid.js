@@ -460,7 +460,7 @@ export default {
       }
       this.sortData = sortParams
       const filterList = []
-      this.columns.filter(i => i.visible !== false).forEach(column => {
+      this.$refs.xTable.visibleColumn.filter(i => i.visible !== false).forEach(column => {
         const { property, filters } = column
         const valueList = []
         const dataList = []
