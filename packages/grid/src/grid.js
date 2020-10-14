@@ -459,7 +459,23 @@ export default {
         }
       }
       this.sortData = sortParams
-      this.filterData = []
+      const filterList = []
+      this.columns.filter(i => i.visible !== false).forEach(column => {
+        const { property, filters } = column
+        const valueList = []
+        const dataList = []
+        if (filters && filters.length) {
+          filters.forEach(item => {
+            if (item.checked) {
+              valueList.push(item.value)
+              dataList.push(item.data)
+            }
+          })
+          // 在 v3.0 中废弃 prop
+          filterList.push({ column, property, field: property, values: valueList, datas: dataList })
+        }
+      })
+      this.filterData = filterList
       this.pendingRecords = []
       this.commitProxy('init')
     },
@@ -553,7 +569,7 @@ export default {
                 }
               }
               this.sortData = params.sort = sortParams
-              this.filterData = params.filters = []
+              this.filterData = params.filters
             }
             const applyArgs = [params].concat(args)
             this.tableLoading = true
